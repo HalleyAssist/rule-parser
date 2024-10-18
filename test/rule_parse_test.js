@@ -1,5 +1,5 @@
 const
-	RuleParser = require("../src/RuleParser"),
+	RuleParser = require("../"),
 	{ expect } = require('chai')
 
 describe("RuleParser", function () {

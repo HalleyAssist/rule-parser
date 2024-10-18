@@ -40,10 +40,12 @@ jobs:
     - name: Install modules
       run: |
         npm install
-    - name: Test
+    - name: Test (Development)
       run: npm test
     - name: Build
       run: node bin/package.js
+    - name: Test (Production)
+      run: npm test
     - run: |
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
         jq '.version="'"$VERSION"'"" | .main="./src/RuleParser.production.js"' package.json > /tmp/a
