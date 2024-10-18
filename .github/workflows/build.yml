@@ -42,9 +42,12 @@ jobs:
         npm install
     - name: Test
       run: npm test
+    - name: Build
+      run: node bin/package.js
     - run: |
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
-        jq '.version="'"$VERSION"'"' package.json > /tmp/a
+        jq '.version="'"$VERSION"'"" | .main="./src/RuleParser.production.js"' package.json > /tmp/a
+
         mv /tmp/a package.json
       if: "startsWith(github.ref, 'refs/tags/v')"
     - run: |

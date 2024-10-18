@@ -20,7 +20,7 @@
     "ebnf": "^1.9.1"
   },
   "devDependencies": {
-    "chai": "^4.4.1",
+    "chai": "^4",
     "mocha": "^10.4.0"
   },
   "publishConfig": {
