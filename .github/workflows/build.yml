@@ -47,8 +47,9 @@ jobs:
     - name: Test (Production)
       run: npm test
     - run: |
+        ls -las src
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed -e 's/^v//')
-        jq '.version="'"$VERSION"'" | .main="./src/RuleParser.production.js"' package.json > /tmp/a
+        jq '.version="'"$VERSION"'" | .main="src/RuleParser.production.js"' package.json > /tmp/a
 
         mv /tmp/a package.json
     - run: |
