@@ -1,4 +1,4 @@
-const { Parser } = require('ebnf'),
+const {Parser} = require('ebnf/dist/Parser.js'),
       assert = require('assert')
 
 let ParserRules = require('./RuleParser.ebnf.js')
