@@ -43,7 +43,7 @@ END_PARENTHESIS      ::= ")"
 argument             ::= statement WS* ("," WS*)?
 arguments            ::= argument*
 fname                ::= [a-zA-z0-9]+
-fcall                ::= fname BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
+fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
 between_number       ::= number ((WS+ ("and" | "AND") WS+) | (WS* "-" WS*)) number
 between_tod          ::= number_tod ((WS+ ("and" | "AND") WS+)) number_tod
