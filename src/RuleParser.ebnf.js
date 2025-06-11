@@ -43,7 +43,7 @@ END_PARENTHESIS      ::= ")"
 argument             ::= statement WS* ("," WS*)?
 arguments            ::= argument*
 fname                ::= [a-zA-z0-9]+
-fcall                ::= fname WS* BEGIN_ARGUMENT arguments? END_ARGUMENT
+fcall                ::= fname BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
 between_number       ::= number ((WS+ ("and" | "AND") WS+) | (WS* "-" WS*)) number
 between_tod          ::= number_tod ((WS+ ("and" | "AND") WS+)) number_tod
@@ -75,4 +75,5 @@ time_period          ::= time_period_const | between
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
 HEXDIG               ::= [a-fA-F0-9]
 `
+
 module.exports = Grammars.W3C.getRules(grammar);
