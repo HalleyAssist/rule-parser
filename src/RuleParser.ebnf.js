@@ -58,13 +58,13 @@ LTE                  ::= "<="
 IS                   ::= "is" | "IS"
 EQ                   ::= "==" | "="
 NEQ                  ::= "!="
-NOT                  ::= ("!" WS*) | ("not" WS+)
+NOT                  ::= ("!" WS*) | ("not" WS+) | ("NOT" WS+)
 false                ::= "false" | "FALSE"
 null                 ::= "null" | "NULL"
 true                 ::= "true" | "TRUE"
 array                ::= BEGIN_ARRAY (value (VALUE_SEPARATOR value)*)? END_ARRAY
 
-unit                 ::= "seconds" | "second" | "minutes" | "minute" | "min" | "mins" | "min" | "hours" | "hour" | "days" | "day" | "weeks" | "week"
+unit                 ::= "seconds" | "second" | "minutes" | "minute" | "min" | "mins" | "min" | "hours" | "hour" | "days" | "day" | "weeks" | "week" | "SECONDS" | "SECOND" | "MINUTES" | "MINUTE" | "MIN" | "MINS" | "MIN" | "HOURS" | "HOUR" | "DAYS" | "DAY" | "WEEKS" | "WEEK"
 number               ::= "-"? ([0-9]+) ("." [0-9]+)? (("e" | "E") ( "-" | "+" )? ("0" | [1-9] [0-9]*))?
 number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
