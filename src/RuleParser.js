@@ -101,20 +101,32 @@ class RuleParser {
                 switch(nt.children[1].text){
                     case 'seconds':
                     case 'second':
+                    case 'SECONDS':
+                    case 'SECOND':
                         return mult
                     case 'minutes':
                     case 'minute':
                     case 'mins':
                     case 'min':
+                    case 'MINUTES':
+                    case 'MINUTE':
+                    case 'MINS':
+                    case 'MIN':
                         return mult * 60
                     case 'hours':
                     case 'hour':
+                    case 'HOURS':
+                    case 'HOUR':
                         return mult * 60 * 60
                     case 'days':
                     case 'day':
+                    case 'DAYS':
+                    case 'DAY':
                         return mult * 60 * 60 * 24
                     case 'weeks':
                     case 'week':
+                    case 'WEEKS':
+                    case 'WEEK':
                         return mult * 60 * 60 * 24 * 7
                 }
                 throw new Error(`Invalid exponent ${nt.children[1].text}`)
