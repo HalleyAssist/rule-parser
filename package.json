@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/HalleyAssist/rule-parser#readme",
   "dependencies": {
-    "ebnf": "^1.9.1"
+    "ebnf": "git+https://github.com/HalleyAssist/node-ebnf.git"
   },
   "devDependencies": {
     "chai": "^4",
