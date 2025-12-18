@@ -88,7 +88,7 @@ class RuleParser {
                 const minutes = parseInt(tokens[1])
                 const tod = hours * 100 + minutes
                 const ret = { hours, minutes, tod }
-                if (!isNaN(tod) && ret.hours >= 0 && ret.hours <= 24 && ret.minutes >= 0 && ret.minutes < 60) {
+                if (!isNaN(tod) && ret.hours >= 0 && ret.hours < 24 && ret.minutes >= 0 && ret.minutes < 60) {
                     return ret
                 }
                 throw new Error(`Invalid time of day, ${child.text} -> [${tokens.join(', ')}] -> ${hours}h${minutes}m -> ${tod}`)
