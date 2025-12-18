@@ -1025,7 +1025,7 @@ describe("RuleParser", function () {
 			})
 
 			it("should parse mixed case keywords in real-world-like expression", function() {
-				const expression = "HasSensor(\"temp\") aNd NoT (TimeOfDay() BeTwEeN 08:00 AnD 17:00 oR Temperature() > 5 MiNuTeS)"
+				const expression = "HasSensor(\"temp\") aNd NoT (TimeOfDay() BeTwEeN 08:00 AnD 17:00 oR Duration() > 5 MiNuTeS)"
 				const il = RuleParser.toIL(expression)
 				const eightAm = { hours: 8, minutes: 0, tod: 800 }
 				const fivePm = { hours: 17, minutes: 0, tod: 1700 }
@@ -1034,7 +1034,7 @@ describe("RuleParser", function () {
 					["HasSensor", ["Value", "temp"]],
 					["Not", ["Or",
 						["Between", ["TimeOfDay"], ["Value", eightAm], ["Value", fivePm]],
-						["Gt", ["Temperature"], ["Value", 300]]
+						["Gt", ["Duration"], ["Value", 300]]
 					]]
 				])
 			})
