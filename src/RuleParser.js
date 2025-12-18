@@ -26,10 +26,8 @@ const OperatorFn = {
 const LogicalOperators = {
     "&&": 'And',
     "AND": 'And',
-    "and": 'And',
     "||": 'Or',
     "OR": 'Or',
-    "or": 'Or',
 }
 
 const Epsilon = 0.01
@@ -98,33 +96,21 @@ class RuleParser {
             case 'number_time': {
                 const nt = child
                 const mult = parseFloat(nt.children[0].text)
-                switch(nt.children[1].text){
-                    case 'seconds':
-                    case 'second':
+                switch(nt.children[1].text.toUpperCase()){
                     case 'SECONDS':
                     case 'SECOND':
                         return mult
-                    case 'minutes':
-                    case 'minute':
-                    case 'mins':
-                    case 'min':
                     case 'MINUTES':
                     case 'MINUTE':
                     case 'MINS':
                     case 'MIN':
                         return mult * 60
-                    case 'hours':
-                    case 'hour':
                     case 'HOURS':
                     case 'HOUR':
                         return mult * 60 * 60
-                    case 'days':
-                    case 'day':
                     case 'DAYS':
                     case 'DAY':
                         return mult * 60 * 60 * 24
-                    case 'weeks':
-                    case 'week':
                     case 'WEEKS':
                     case 'WEEK':
                         return mult * 60 * 60 * 24 * 7
@@ -239,7 +225,7 @@ class RuleParser {
         for(const expr of ast.children){
             if(expr.type == 'logical_operator') {
                 const logicalOperator = expr.text.trim()
-                const operatorFn = LogicalOperators[logicalOperator]
+                const operatorFn = LogicalOperators[logicalOperator.toUpperCase()]
                 assert(operatorFn, `Unknown logical operator ${logicalOperator}`)
                 if(currentLogical === null || currentLogical !== operatorFn){
                     if(ret.length > 1){

@@ -2,12 +2,12 @@ const {Grammars} = require('ebnf');
 
 const grammar = `
 statement_main       ::= statement EOF
-logical_operator     ::= AND | OR
+logical_operator     ||= AND | OR
 statement            ::= expression (logical_operator expression)*
 expression           ::= not_expression | standard_expression | parenthesis_expression
 parenthesis_expression::= BEGIN_PARENTHESIS WS* statement WS* END_PARENTHESIS
-not_expression       ::= NOT (result | parenthesis_expression)
-standard_expression  ::= result ((WS* eq_approx) | (WS* basic_rhs) | ((WS+ IS)? WS+ between))?
+not_expression       ||= NOT (result | parenthesis_expression)
+standard_expression  ||= result ((WS* eq_approx) | (WS* basic_rhs) | ((WS+ IS)? WS+ between))?
 basic_rhs            ::= operator WS*  result
 eq_approx            ::= eq_operator WS* "~" WS* result
 
@@ -45,31 +45,31 @@ arguments            ::= argument*
 fname                ::= [a-zA-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
-between_number       ::= number ((WS+ ("and" | "AND") WS+) | (WS* "-" WS*)) number
-between_tod          ::= number_tod ((WS+ ("and" | "AND") WS+)) number_tod
-between              ::= ("between" | "BETWEEN") WS+ (between_number | between_tod)
+between_number       ||= number ((WS+ "AND" WS+) | (WS* "-" WS*)) number
+between_tod          ||= number_tod ((WS+ "AND" WS+)) number_tod
+between              ||= "BETWEEN" WS+ (between_number | between_tod)
 
-AND                  ::= (WS* "&&" WS*) | (WS+ ("AND"|"and") WS+)
-OR                   ::= (WS* "||" WS*) | (WS+ ("OR"|"or") WS+)
+AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
+OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
 GT                   ::= ">"
 LT                   ::= "<"
 GTE                  ::= ">="
 LTE                  ::= "<="
-IS                   ::= "is" | "IS"
+IS                   ||= "is"
 EQ                   ::= "==" | "="
 NEQ                  ::= "!="
-NOT                  ::= ("!" WS*) | ("not" WS+) | ("NOT" WS+)
-false                ::= "false" | "FALSE"
-null                 ::= "null" | "NULL"
-true                 ::= "true" | "TRUE"
+NOT                  ||= ("!" WS*) | ("not" WS+)
+false                ||= "FALSE"
+null                 ||= "null"
+true                 ||= "TRUE"
 array                ::= BEGIN_ARRAY (value (VALUE_SEPARATOR value)*)? END_ARRAY
 
-unit                 ::= "seconds" | "second" | "minutes" | "minute" | "min" | "mins" | "min" | "hours" | "hour" | "days" | "day" | "weeks" | "week" | "SECONDS" | "SECOND" | "MINUTES" | "MINUTE" | "MIN" | "MINS" | "MIN" | "HOURS" | "HOUR" | "DAYS" | "DAY" | "WEEKS" | "WEEK"
-number               ::= "-"? ([0-9]+) ("." [0-9]+)? (("e" | "E") ( "-" | "+" )? ("0" | [1-9] [0-9]*))?
+unit                 ||= "seconds" | "second" | "minutes" | "minute" | "min" | "mins" | "min" | "hours" | "hour" | "days" | "day" | "weeks" | "week"
+number               ::= "-"? ([0-9]+) ("." [0-9]+)? ("e" ( "-" | "+" )? ("0" | [1-9] [0-9]*))?
 number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
-time_period_const    ::= "today"
+time_period_const    ||= "today"
 time_period          ::= time_period_const | between
 
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
