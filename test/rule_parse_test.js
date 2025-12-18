@@ -211,4 +211,12 @@ describe("RuleParser", function () {
 		const il = RuleParser.toIL(expression1)
 		expect(il).to.be.eql(["Lt",["Default",["A"],["Value",1]],["Value",20]])
 	})
+
+	it("should parse BETWEEN 01:00 AND 03:00", function () {
+		const expression = "A(BETWEEN 01:00 AND 03:00)";
+		const il = RuleParser.toIL(expression);
+		const oneAm = { hours: 1, minutes: 0, tod: 100 };
+		const threeAm = { hours: 3, minutes: 0, tod: 300 };
+		expect(il).to.be.eql(["A", ["TimePeriodBetween", oneAm, threeAm]]);
+	});
 });
