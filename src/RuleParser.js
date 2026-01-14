@@ -62,6 +62,28 @@ class RuleParser {
         }
         return ret
     }
+    static _parseDowRange(dowRange) {
+        const dow = []
+        
+        // dow_range can have 1 or 2 children (single day or range)
+        if (dowRange.children.length === 1) {
+            // Single day: ON MONDAY
+            dow.push(dowRange.children[0].text.toLowerCase())
+        } else if (dowRange.children.length === 2) {
+            // Range: ON MONDAY TO WEDNESDAY
+            dow.push(dowRange.children[0].text.toLowerCase())
+            dow.push(dowRange.children[1].text.toLowerCase())
+        }
+        
+        return dow
+    }
+    static _addDowToTods(startTod, endTod, dowRange) {
+        if (dowRange?.type === 'dow_range') {
+            const dow = RuleParser._parseDowRange(dowRange)
+            startTod.dow = dow
+            endTod.dow = dow
+        }
+    }
     static _parseTimePeriod(tp){
         switch(tp.type){
             case 'time_period_const':
@@ -73,23 +95,8 @@ class RuleParser {
                 const endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
                 // Check if there's a dow_range at betweenTod.children[2]
-                if (betweenTod.children.length > 2 && betweenTod.children[2]?.type === 'dow_range') {
-                    const dowRange = betweenTod.children[2]
-                    const dow = []
-                    
-                    // dow_range can have 1 or 2 children (single day or range)
-                    if (dowRange.children.length === 1) {
-                        // Single day: ON MONDAY
-                        dow.push(dowRange.children[0].text.toLowerCase())
-                    } else if (dowRange.children.length === 2) {
-                        // Range: ON MONDAY TO WEDNESDAY
-                        dow.push(dowRange.children[0].text.toLowerCase())
-                        dow.push(dowRange.children[1].text.toLowerCase())
-                    }
-                    
-                    // Add dow field to both tod objects
-                    startTod.dow = dow
-                    endTod.dow = dow
+                if (betweenTod.children.length > 2) {
+                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
                 return ["TimePeriodBetween", startTod, endTod]
@@ -224,21 +231,8 @@ class RuleParser {
                         const endTod = RuleParser.__parseValue(rhs.children[1])
                         
                         // Check if there's a dow_range (children[2])
-                        if (rhs.children.length > 2 && rhs.children[2]?.type === 'dow_range') {
-                            const dowRange = rhs.children[2]
-                            const dow = []
-                            
-                            // dow_range can have 1 or 2 children (single day or range)
-                            if (dowRange.children.length === 1) {
-                                dow.push(dowRange.children[0].text.toLowerCase())
-                            } else if (dowRange.children.length === 2) {
-                                dow.push(dowRange.children[0].text.toLowerCase())
-                                dow.push(dowRange.children[1].text.toLowerCase())
-                            }
-                            
-                            // Add dow field to both tod objects
-                            startTod.dow = dow
-                            endTod.dow = dow
+                        if (rhs.children.length > 2) {
+                            RuleParser._addDowToTods(startTod, endTod, rhs.children[2])
                         }
                         
                         return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
@@ -252,21 +246,8 @@ class RuleParser {
                             const endTod = RuleParser.__parseValue(betweenChild.children[1])
                             
                             // Check if there's a dow_range (children[2])
-                            if (betweenChild.children.length > 2 && betweenChild.children[2]?.type === 'dow_range') {
-                                const dowRange = betweenChild.children[2]
-                                const dow = []
-                                
-                                // dow_range can have 1 or 2 children (single day or range)
-                                if (dowRange.children.length === 1) {
-                                    dow.push(dowRange.children[0].text.toLowerCase())
-                                } else if (dowRange.children.length === 2) {
-                                    dow.push(dowRange.children[0].text.toLowerCase())
-                                    dow.push(dowRange.children[1].text.toLowerCase())
-                                }
-                                
-                                // Add dow field to both tod objects
-                                startTod.dow = dow
-                                endTod.dow = dow
+                            if (betweenChild.children.length > 2) {
+                                RuleParser._addDowToTods(startTod, endTod, betweenChild.children[2])
                             }
                             
                             return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
