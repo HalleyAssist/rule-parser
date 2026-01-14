@@ -1190,4 +1190,71 @@ describe("RuleParser", function () {
 			expect(il).to.be.eql(["A", ["TimePeriodBetween", tenPm, twoAm]])
 		})
 	})
-});
+
+	// Tests for numeric BETWEEN in function arguments
+	describe("Numeric BETWEEN in Function Arguments", function() {
+		it("should parse BETWEEN with plain numbers", function() {
+			const expression = "A(BETWEEN 1 AND 10)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 10]])
+		})
+
+		it("should parse BETWEEN with time units", function() {
+			const expression = "A(BETWEEN 1 DAYS AND 10 DAYS)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 86400, 864000]])
+		})
+
+		it("should parse BETWEEN with different time units", function() {
+			const expression = "A(BETWEEN 1 HOUR AND 2 HOURS)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 3600, 7200]])
+		})
+
+		it("should parse BETWEEN with minutes", function() {
+			const expression = "A(BETWEEN 5 MINUTES AND 30 MINUTES)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 300, 1800]])
+		})
+
+		it("should parse BETWEEN with mixed number and time units", function() {
+			const expression = "A(BETWEEN 1 AND 5 MINUTES)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 300]])
+		})
+
+		it("should parse BETWEEN with decimal numbers", function() {
+			const expression = "A(BETWEEN 1.5 AND 10.5)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1.5, 10.5]])
+		})
+
+		it("should parse BETWEEN with negative numbers", function() {
+			const expression = "A(BETWEEN -10 AND 10)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", -10, 10]])
+		})
+
+		it("should parse BETWEEN with dash separator", function() {
+			const expression = "A(BETWEEN 1-10)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 10]])
+		})
+
+		it("should parse BETWEEN with weeks", function() {
+			const expression = "A(BETWEEN 1 WEEK AND 2 WEEKS)"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 604800, 1209600]])
+		})
+
+		it("should work in complex expressions", function() {
+			const expression = "Duration(BETWEEN 5 MINUTES AND 1 HOUR) && Active() == TRUE"
+			const il = RuleParser.toIL(expression)
+			expect(il).to.be.eql([
+				"And",
+				["Duration", ["TimePeriodBetween", 300, 3600]],
+				["Eq", ["Active"], ["Value", true]]
+			])
+		})
+	})
+})
