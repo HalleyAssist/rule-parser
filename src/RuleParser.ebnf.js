@@ -46,8 +46,10 @@ fname                ::= [a-zA-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
 between_number       ||= number ((WS+ "AND" WS+) | (WS* "-" WS*)) number
-between_tod          ||= number_tod ((WS+ "AND" WS+)) number_tod
+between_tod          ||= number_tod ((WS+ "AND" WS+)) number_tod (WS+ dow_range)?
 between              ||= "BETWEEN" WS+ (between_number | between_tod)
+dow                  ||= "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY"
+dow_range            ||= "ON" WS+ dow (WS+ "TO" WS+ dow)?
 between_tod_only     ||= "BETWEEN" WS+ between_tod
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)

@@ -66,8 +66,34 @@ class RuleParser {
         switch(tp.type){
             case 'time_period_const':
                 return ["TimePeriodConst", tp.text]
-            case 'between_tod_only':
-                return ["TimePeriodBetween", RuleParser.__parseValue(tp.children[0]?.children[0]), RuleParser.__parseValue(tp.children[0]?.children[1])]
+            case 'between_tod_only': {
+                // between_tod_only has children[0] = between_tod node
+                const betweenTod = tp.children[0]
+                const startTod = RuleParser.__parseValue(betweenTod.children[0])
+                const endTod = RuleParser.__parseValue(betweenTod.children[1])
+                
+                // Check if there's a dow_range at betweenTod.children[2]
+                if (betweenTod.children.length > 2 && betweenTod.children[2]?.type === 'dow_range') {
+                    const dowRange = betweenTod.children[2]
+                    const dow = []
+                    
+                    // dow_range can have 1 or 2 children (single day or range)
+                    if (dowRange.children.length === 1) {
+                        // Single day: ON MONDAY
+                        dow.push(dowRange.children[0].text.toLowerCase())
+                    } else if (dowRange.children.length === 2) {
+                        // Range: ON MONDAY TO WEDNESDAY
+                        dow.push(dowRange.children[0].text.toLowerCase())
+                        dow.push(dowRange.children[1].text.toLowerCase())
+                    }
+                    
+                    // Add dow field to both tod objects
+                    startTod.dow = dow
+                    endTod.dow = dow
+                }
+                
+                return ["TimePeriodBetween", startTod, endTod]
+            }
         }
     }
     static __parseValue(child){
@@ -191,9 +217,65 @@ class RuleParser {
             case 2: {
                 const rhs = expr.children[1]
                 switch(rhs.type){
-                    case 'between_tod':
+                    case 'between_tod': {
+                        // Direct between_tod (without wrapping between node)
+                        // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                        const startTod = RuleParser.__parseValue(rhs.children[0])
+                        const endTod = RuleParser.__parseValue(rhs.children[1])
+                        
+                        // Check if there's a dow_range (children[2])
+                        if (rhs.children.length > 2 && rhs.children[2]?.type === 'dow_range') {
+                            const dowRange = rhs.children[2]
+                            const dow = []
+                            
+                            // dow_range can have 1 or 2 children (single day or range)
+                            if (dowRange.children.length === 1) {
+                                dow.push(dowRange.children[0].text.toLowerCase())
+                            } else if (dowRange.children.length === 2) {
+                                dow.push(dowRange.children[0].text.toLowerCase())
+                                dow.push(dowRange.children[1].text.toLowerCase())
+                            }
+                            
+                            // Add dow field to both tod objects
+                            startTod.dow = dow
+                            endTod.dow = dow
+                        }
+                        
+                        return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
+                    }
+                    case 'between': {
+                        // between wraps either between_number or between_tod
+                        const betweenChild = rhs.children[0]
+                        if (betweenChild.type === 'between_tod') {
+                            // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                            const startTod = RuleParser.__parseValue(betweenChild.children[0])
+                            const endTod = RuleParser.__parseValue(betweenChild.children[1])
+                            
+                            // Check if there's a dow_range (children[2])
+                            if (betweenChild.children.length > 2 && betweenChild.children[2]?.type === 'dow_range') {
+                                const dowRange = betweenChild.children[2]
+                                const dow = []
+                                
+                                // dow_range can have 1 or 2 children (single day or range)
+                                if (dowRange.children.length === 1) {
+                                    dow.push(dowRange.children[0].text.toLowerCase())
+                                } else if (dowRange.children.length === 2) {
+                                    dow.push(dowRange.children[0].text.toLowerCase())
+                                    dow.push(dowRange.children[1].text.toLowerCase())
+                                }
+                                
+                                // Add dow field to both tod objects
+                                startTod.dow = dow
+                                endTod.dow = dow
+                            }
+                            
+                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
+                        } else {
+                            // between_number - no dow support
+                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(betweenChild.children[0])], ['Value', RuleParser.__parseValue(betweenChild.children[1])]]
+                        }
+                    }
                     case 'between_number':
-                    case 'between':
                         return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(rhs.children[0].children[0])], ['Value', RuleParser.__parseValue(rhs.children[0].children[1])]]
                     case 'basic_rhs':
                         return [OperatorFn[rhs.children[0].text], RuleParser._parseResult(expr.children[0]), RuleParser._parseResult(rhs.children[1])]
