@@ -66,7 +66,7 @@ class RuleParser {
         switch(tp.type){
             case 'time_period_const':
                 return ["TimePeriodConst", tp.text]
-            case 'between':
+            case 'between_tod_only':
                 return ["TimePeriodBetween", RuleParser.__parseValue(tp.children[0]?.children[0]), RuleParser.__parseValue(tp.children[0]?.children[1])]
         }
     }

@@ -48,6 +48,7 @@ fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 between_number       ||= number ((WS+ "AND" WS+) | (WS* "-" WS*)) number
 between_tod          ||= number_tod ((WS+ "AND" WS+)) number_tod
 between              ||= "BETWEEN" WS+ (between_number | between_tod)
+between_tod_only     ||= "BETWEEN" WS+ between_tod
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
 OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
@@ -70,7 +71,7 @@ number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
 time_period_const    ||= "today"
-time_period          ::= time_period_const | between
+time_period          ::= time_period_const | between_tod_only
 
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
 HEXDIG               ::= [a-fA-F0-9]

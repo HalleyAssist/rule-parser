@@ -84,10 +84,10 @@ describe("RuleParser", function () {
 		}
 	})
 	it("should be able to parse tp between", function () {
-		const expression1 = `RoomDuration(BETWEEN 01:00 and 24:00)`
+		const expression1 = `RoomDuration(BETWEEN 01:00 and 23:59)`
 		const il = RuleParser.toIL(expression1)
 		const oneAm = {hours: 1, minutes: 0, tod: 100}
-		const midnight = {hours: 24, minutes: 0, tod: 2400}
+		const midnight = {hours: 23, minutes: 59, tod: 2359}
 		expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', oneAm, midnight]])
 	})
 	it("should be able to parse parenthesis", function () {
