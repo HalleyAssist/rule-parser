@@ -73,12 +73,14 @@ class RuleParser {
             // Range: ON MONDAY TO WEDNESDAY
             dow.push(dowRange.children[0].text.toLowerCase())
             dow.push(dowRange.children[1].text.toLowerCase())
+        } else {
+            throw new Error(`Invalid dow_range with ${dowRange.children.length} children`)
         }
         
         return dow
     }
     static _addDowToTods(startTod, endTod, dowRange) {
-        if (dowRange?.type === 'dow_range') {
+        if (dowRange && dowRange.type === 'dow_range') {
             const dow = RuleParser._parseDowRange(dowRange)
             startTod.dow = dow
             endTod.dow = dow
