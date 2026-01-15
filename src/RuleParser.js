@@ -103,7 +103,7 @@ class RuleParser {
                 
                 return ["TimePeriodBetween", startTod, endTod]
             }
-            case 'between_number_only': {
+            case 'between_time_only': {
                 // between_number_only has children[0] = between_number node
                 const betweenNumber = tp.children[0]
                 const startValue = RuleParser.__parseValue(betweenNumber.children[0])

@@ -1193,12 +1193,6 @@ describe("RuleParser", function () {
 
 	// Tests for numeric BETWEEN in function arguments
 	describe("Numeric BETWEEN in Function Arguments", function() {
-		it("should parse BETWEEN with plain numbers", function() {
-			const expression = "A(BETWEEN 1 AND 10)"
-			const il = RuleParser.toIL(expression)
-			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 10]])
-		})
-
 		it("should parse BETWEEN with time units", function() {
 			const expression = "A(BETWEEN 1 DAYS AND 10 DAYS)"
 			const il = RuleParser.toIL(expression)
@@ -1216,31 +1210,7 @@ describe("RuleParser", function () {
 			const il = RuleParser.toIL(expression)
 			expect(il).to.be.eql(["A", ["TimePeriodBetween", 300, 1800]])
 		})
-
-		it("should parse BETWEEN with mixed number and time units", function() {
-			const expression = "A(BETWEEN 1 AND 5 MINUTES)"
-			const il = RuleParser.toIL(expression)
-			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 300]])
-		})
-
-		it("should parse BETWEEN with decimal numbers", function() {
-			const expression = "A(BETWEEN 1.5 AND 10.5)"
-			const il = RuleParser.toIL(expression)
-			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1.5, 10.5]])
-		})
-
-		it("should parse BETWEEN with negative numbers", function() {
-			const expression = "A(BETWEEN -10 AND 10)"
-			const il = RuleParser.toIL(expression)
-			expect(il).to.be.eql(["A", ["TimePeriodBetween", -10, 10]])
-		})
-
-		it("should parse BETWEEN with dash separator", function() {
-			const expression = "A(BETWEEN 1-10)"
-			const il = RuleParser.toIL(expression)
-			expect(il).to.be.eql(["A", ["TimePeriodBetween", 1, 10]])
-		})
-
+		
 		it("should parse BETWEEN with weeks", function() {
 			const expression = "A(BETWEEN 1 WEEK AND 2 WEEKS)"
 			const il = RuleParser.toIL(expression)

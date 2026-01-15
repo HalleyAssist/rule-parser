@@ -46,11 +46,12 @@ fname                ::= [a-zA-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
 between_number       ||= (number_time | number) ((WS+ "AND" WS+) | (WS* "-" WS*)) (number_time | number)
+between_number_time  ||= number_time ((WS+ "AND" WS+) | (WS* "-" WS*)) number_time
 between_tod          ||= number_tod ((WS+ "AND" WS+)) number_tod (WS+ dow_range)?
 between              ||= "BETWEEN" WS+ (between_number | between_tod)
 dow                  ||= "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY"
 dow_range            ||= "ON" WS+ dow (WS+ "TO" WS+ dow)?
-between_number_only  ||= "BETWEEN" WS+ between_number
+between_time_only    ||= "BETWEEN" WS+ between_number_time
 between_tod_only     ||= "BETWEEN" WS+ between_tod
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
@@ -74,7 +75,7 @@ number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
 time_period_const    ||= "today"
-time_period          ::= time_period_const | between_tod_only | between_number_only
+time_period          ::= time_period_const | between_tod_only | between_time_only
 
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
 HEXDIG               ::= [a-fA-F0-9]
