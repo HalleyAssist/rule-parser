@@ -216,9 +216,9 @@ class RuleParser {
     }
     static _parseArithmeticResult(result){
         assert(result.children.length == 3)
-        const partA = this._parseArithmeticOperand(result.children[0])
+        const partA = RuleParser._parseArithmeticOperand(result.children[0])
         const operatorFn = ArithmeticOperators[result.children[1].text]
-        const partB = this.__parseArithmeticResult(result, 2)
+        const partB = RuleParser.__parseArithmeticResult(result, 2)
 
         return [operatorFn, partA, partB]
     }
