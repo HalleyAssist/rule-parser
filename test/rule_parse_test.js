@@ -1227,4 +1227,83 @@ describe("RuleParser", function () {
 			])
 		})
 	})
+
+	// Tests for tightened arithmetic operator restrictions
+	describe("Arithmetic Operator Restrictions", function() {
+		it("should reject arithmetic with string values", function() {
+			expect(function() {
+				RuleParser.toIL('A() + "string"')
+			}).to.throw()
+		})
+
+		it("should reject arithmetic with boolean TRUE", function() {
+			expect(function() {
+				RuleParser.toIL('A() * TRUE')
+			}).to.throw()
+		})
+
+		it("should reject arithmetic with boolean FALSE", function() {
+			expect(function() {
+				RuleParser.toIL('A() / FALSE')
+			}).to.throw()
+		})
+
+		it("should reject arithmetic with arrays", function() {
+			expect(function() {
+				RuleParser.toIL('A() - [1,2,3]')
+			}).to.throw()
+		})
+
+		it("should reject arithmetic with BETWEEN expressions", function() {
+			expect(function() {
+				RuleParser.toIL('A() + BETWEEN 1 AND 5')
+			}).to.throw()
+		})
+
+		it("should reject default operator with string", function() {
+			expect(function() {
+				RuleParser.toIL('A() ?? "default"')
+			}).to.throw()
+		})
+
+		it("should reject arithmetic with time period constants", function() {
+			expect(function() {
+				RuleParser.toIL('A() + today')
+			}).to.throw()
+		})
+
+		it("should reject comparison with BETWEEN on RHS", function() {
+			expect(function() {
+				RuleParser.toIL('A() > BETWEEN 1 AND 5')
+			}).to.throw()
+		})
+
+		it("should allow arithmetic with numbers", function() {
+			expect(RuleParser.toIL("A() + 5")).to.be.eql(["MathAdd", ["A"], ["Value", 5]])
+			expect(RuleParser.toIL("10 * 2")).to.be.eql(["MathMul", ["Value", 10], ["Value", 2]])
+		})
+
+		it("should allow arithmetic with function calls", function() {
+			expect(RuleParser.toIL("A() - B()")).to.be.eql(["MathSub", ["A"], ["B"]])
+			expect(RuleParser.toIL("A() / B()")).to.be.eql(["MathDiv", ["A"], ["B"]])
+		})
+
+		it("should allow arithmetic with time units", function() {
+			expect(RuleParser.toIL("A() + 1 hour")).to.be.eql(["MathAdd", ["A"], ["Value", 3600]])
+			expect(RuleParser.toIL("A() - 30 minutes")).to.be.eql(["MathSub", ["A"], ["Value", 1800]])
+		})
+
+		it("should allow default operator with numbers", function() {
+			expect(RuleParser.toIL("A() ?? 5")).to.be.eql(["Default", ["A"], ["Value", 5]])
+		})
+
+		it("should allow default operator with function calls", function() {
+			expect(RuleParser.toIL("A() ?? B()")).to.be.eql(["Default", ["A"], ["B"]])
+		})
+
+		it("should allow chained arithmetic with valid operands", function() {
+			expect(RuleParser.toIL("A() + B() * C()"))
+				.to.be.eql(["MathAdd", ["A"], ["MathMul", ["B"], ["C"]]])
+		})
+	})
 })

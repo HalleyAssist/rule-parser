@@ -200,13 +200,40 @@ class RuleParser {
         }
         return null
     }
+    static _parseArithmeticOperand(operand){
+        assert(operand.children.length == 1)
+        const child = operand.children[0]
+        const type = child.type
+        switch(type){
+            case 'fcall':
+                return RuleParser._parseFcall(child)
+            case 'number':
+                return ['Value', parseFloat(child.text)]
+            case 'number_time':
+                return ['Value', RuleParser.__parseValue(child)]
+        }
+        throw new Error(`Unknown arithmetic operand type ${type}`)
+    }
     static _parseArithmeticResult(result){
         assert(result.children.length == 3)
-        const partA = this._parseSimpleResult(result.children[0])
+        const partA = this._parseArithmeticOperand(result.children[0])
         const operatorFn = ArithmeticOperators[result.children[1].text]
-        const partB = this.__parseResult(result, 2)
+        const partB = this.__parseArithmeticResult(result, 2)
 
         return [operatorFn, partA, partB]
+    }
+
+    static __parseArithmeticResult(result, idx){
+        const child = result.children[idx]
+        const type = child.type
+        switch(type){
+            case 'arithmetic_operand':
+                return RuleParser._parseArithmeticOperand(child)
+            case 'arithmetic_result':
+                return RuleParser._parseArithmeticResult(child)
+        }
+        
+        throw new Error(`Unknown arithmetic result node ${type}`)
     }
 
     static __parseResult(result, idx){

@@ -18,7 +18,8 @@ DIVIDE               ::= "/"
 MODULUS              ::= "%"
 DEFAULT_VAL          ::= "??"
 arithmetic_operator  ::= PLUS | MINUS | MULTIPLY | DIVIDE | MODULUS | DEFAULT_VAL
-arithmetic_result    ::= simple_result WS* arithmetic_operator WS* ( arithmetic_result | simple_result )
+arithmetic_operand   ::= fcall | number_time | number
+arithmetic_result    ::= arithmetic_operand WS* arithmetic_operator WS* ( arithmetic_result | arithmetic_operand )
 
 simple_result        ::= fcall | value
 result               ::= arithmetic_result | simple_result
