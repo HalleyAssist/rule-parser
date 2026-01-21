@@ -30,17 +30,16 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
-// Map all possible DOW representations to canonical lowercase full form
-// Using lowercase full names (e.g., 'monday') for consistency with test expectations
-// and for better readability in the intermediate language representation
+// Map all possible DOW representations to canonical uppercase full form
+// Using uppercase full names (e.g., 'MONDAY') for the intermediate language representation
 const DOW_MAP = {
-    'MONDAY': 'monday', 'MON': 'monday',
-    'TUESDAY': 'tuesday', 'TUE': 'tuesday',
-    'WEDNESDAY': 'wednesday', 'WED': 'wednesday',
-    'THURSDAY': 'thursday', 'THU': 'thursday', 'THUR': 'thursday',
-    'FRIDAY': 'friday', 'FRI': 'friday',
-    'SATURDAY': 'saturday', 'SAT': 'saturday',
-    'SUNDAY': 'sunday', 'SUN': 'sunday',
+    'MONDAY': 'MONDAY', 'MON': 'MONDAY',
+    'TUESDAY': 'TUESDAY', 'TUE': 'TUESDAY',
+    'WEDNESDAY': 'WEDNESDAY', 'WED': 'WEDNESDAY',
+    'THURSDAY': 'THURSDAY', 'THU': 'THURSDAY', 'THUR': 'THURSDAY',
+    'FRIDAY': 'FRIDAY', 'FRI': 'FRIDAY',
+    'SATURDAY': 'SATURDAY', 'SAT': 'SATURDAY',
+    'SUNDAY': 'SUNDAY', 'SUN': 'SUNDAY',
 };
 const normalizeDow = (text) => {
     const upper = text.toUpperCase();
@@ -165,11 +164,11 @@ class RuleParser {
                 const endValue = RuleParser.__parseValue(betweenNumberTime.children[1])
                 
                 // Check if there's a dow_range at betweenNumberTime.children[2]
-                // Note: startValue and endValue are numbers (seconds), not objects like TOD
-                // So we need to return them wrapped in an object if DOW is present
+                // If DOW filters are provided, append them as additional parameters
                 if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
                     const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
-                    return ["TimePeriodBetween", { seconds: startValue, dow }, { seconds: endValue, dow }]
+                    // Append DOW as additional arguments: ["TimePeriodBetween", start, end, "MONDAY"] or ["TimePeriodBetween", start, end, "MONDAY", "FRIDAY"]
+                    return ["TimePeriodBetween", startValue, endValue, ...dow]
                 }
                 
                 return ["TimePeriodBetween", startValue, endValue]
