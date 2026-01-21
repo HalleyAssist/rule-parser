@@ -89,6 +89,29 @@ class RuleParser {
     static _parseTimePeriod(tp){
         switch(tp.type){
             case 'time_period_const':
+                // Check if this is a time_period_ago (has children)
+                if (tp.children && tp.children.length > 0 && tp.children[0].type === 'time_period_ago') {
+                    const timePeriodAgo = tp.children[0]
+                    // Extract all number_time children and sum them up
+                    let totalSeconds = 0
+                    const components = []
+                    for (const child of timePeriodAgo.children) {
+                        if (child.type === 'number_time') {
+                            const number = parseFloat(child.children[0].text)
+                            const unit = child.children[1].text.toUpperCase()
+                            components.push([number, unit])
+                            // Parse the value to get seconds
+                            totalSeconds += RuleParser.__parseValue(child)
+                        }
+                    }
+                    // If there's only one component, use its number and unit
+                    // Otherwise, use the total in seconds and "SECONDS" as the unit
+                    if (components.length === 1) {
+                        return ["TimePeriodConstAgo", components[0][0], components[0][1]]
+                    } else {
+                        return ["TimePeriodConstAgo", totalSeconds, "SECONDS"]
+                    }
+                }
                 return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
                 // time_period_ago_between has children[0] = number_time, children[1] = between_tod_only
