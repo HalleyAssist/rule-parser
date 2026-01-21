@@ -1334,7 +1334,7 @@ describe("RuleParser", function () {
 		it("should parse BETWEEN time units without DOW (regression test)", function() {
 			const expression = "A(BETWEEN 1 DAY AND 10 DAYS)"
 			const il = RuleParser.toIL(expression)
-			// Should still work without DOW - no dow property
+			// Should return just 2 arguments when DOW is not specified
 			expect(il).to.be.eql(["A", ["TimePeriodBetween", 86400, 864000]])
 		})
 
