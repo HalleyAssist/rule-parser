@@ -14,96 +14,96 @@ describe("Day-of-Week (DOW) Filters", function() {
 	it("should parse time period with single DOW", function() {
 		const expression = "A(BETWEEN 01:00 AND 03:00 ON MONDAY)"
 		const il = RuleParser.toIL(expression)
-		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: ["MONDAY"] }
-		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: ["MONDAY"] }
+		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: "MONDAY" }
+		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: "MONDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", oneAm, threeAm]])
 	})
 
 	it("should parse time period with DOW range", function() {
 		const expression = "A(BETWEEN 01:00 AND 03:00 ON MONDAY TO WEDNESDAY)"
 		const il = RuleParser.toIL(expression)
-		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: ["MONDAY", "WEDNESDAY"] }
-		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: ["MONDAY", "WEDNESDAY"] }
+		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: "WEDNESDAY" }
+		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: "WEDNESDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", oneAm, threeAm]])
 	})
 
 	it("should parse time period with TUESDAY", function() {
 		const expression = "A(BETWEEN 09:00 AND 17:00 ON TUESDAY)"
 		const il = RuleParser.toIL(expression)
-		const nineAm = { hours: 9, minutes: 0, tod: 900, dow: ["TUESDAY"] }
-		const fivePm = { hours: 17, minutes: 0, tod: 1700, dow: ["TUESDAY"] }
+		const nineAm = { hours: 9, minutes: 0, tod: 900, dow: "TUESDAY" }
+		const fivePm = { hours: 17, minutes: 0, tod: 1700, dow: "TUESDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", nineAm, fivePm]])
 	})
 
 	it("should parse time period with WEDNESDAY", function() {
 		const expression = "A(BETWEEN 10:30 AND 14:45 ON WEDNESDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 10, minutes: 30, tod: 1030, dow: ["WEDNESDAY"] }
-		const end = { hours: 14, minutes: 45, tod: 1445, dow: ["WEDNESDAY"] }
+		const start = { hours: 10, minutes: 30, tod: 1030, dow: "WEDNESDAY" }
+		const end = { hours: 14, minutes: 45, tod: 1445, dow: "WEDNESDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with THURSDAY", function() {
 		const expression = "A(BETWEEN 08:00 AND 12:00 ON THURSDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 8, minutes: 0, tod: 800, dow: ["THURSDAY"] }
-		const end = { hours: 12, minutes: 0, tod: 1200, dow: ["THURSDAY"] }
+		const start = { hours: 8, minutes: 0, tod: 800, dow: "THURSDAY" }
+		const end = { hours: 12, minutes: 0, tod: 1200, dow: "THURSDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with FRIDAY", function() {
 		const expression = "A(BETWEEN 13:00 AND 18:00 ON FRIDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 13, minutes: 0, tod: 1300, dow: ["FRIDAY"] }
-		const end = { hours: 18, minutes: 0, tod: 1800, dow: ["FRIDAY"] }
+		const start = { hours: 13, minutes: 0, tod: 1300, dow: "FRIDAY" }
+		const end = { hours: 18, minutes: 0, tod: 1800, dow: "FRIDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with SATURDAY", function() {
 		const expression = "A(BETWEEN 00:00 AND 23:59 ON SATURDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 0, minutes: 0, tod: 0, dow: ["SATURDAY"] }
-		const end = { hours: 23, minutes: 59, tod: 2359, dow: ["SATURDAY"] }
+		const start = { hours: 0, minutes: 0, tod: 0, dow: "SATURDAY" }
+		const end = { hours: 23, minutes: 59, tod: 2359, dow: "SATURDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with SUNDAY", function() {
 		const expression = "A(BETWEEN 06:00 AND 12:00 ON SUNDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 6, minutes: 0, tod: 600, dow: ["SUNDAY"] }
-		const end = { hours: 12, minutes: 0, tod: 1200, dow: ["SUNDAY"] }
+		const start = { hours: 6, minutes: 0, tod: 600, dow: "SUNDAY" }
+		const end = { hours: 12, minutes: 0, tod: 1200, dow: "SUNDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with different DOW ranges", function() {
 		const expression = "A(BETWEEN 08:30 AND 17:00 ON TUESDAY TO FRIDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 8, minutes: 30, tod: 830, dow: ["TUESDAY", "FRIDAY"] }
-		const end = { hours: 17, minutes: 0, tod: 1700, dow: ["TUESDAY", "FRIDAY"] }
+		const start = { hours: 8, minutes: 30, tod: 830, dow: "FRIDAY" }
+		const end = { hours: 17, minutes: 0, tod: 1700, dow: "FRIDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with MONDAY TO FRIDAY", function() {
 		const expression = "A(BETWEEN 09:00 AND 18:00 ON MONDAY TO FRIDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 9, minutes: 0, tod: 900, dow: ["MONDAY", "FRIDAY"] }
-		const end = { hours: 18, minutes: 0, tod: 1800, dow: ["MONDAY", "FRIDAY"] }
+		const start = { hours: 9, minutes: 0, tod: 900, dow: "FRIDAY" }
+		const end = { hours: 18, minutes: 0, tod: 1800, dow: "FRIDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse time period with SATURDAY TO SUNDAY", function() {
 		const expression = "A(BETWEEN 10:00 AND 22:00 ON SATURDAY TO SUNDAY)"
 		const il = RuleParser.toIL(expression)
-		const start = { hours: 10, minutes: 0, tod: 1000, dow: ["SATURDAY", "SUNDAY"] }
-		const end = { hours: 22, minutes: 0, tod: 2200, dow: ["SATURDAY", "SUNDAY"] }
+		const start = { hours: 10, minutes: 0, tod: 1000, dow: "SUNDAY" }
+		const end = { hours: 22, minutes: 0, tod: 2200, dow: "SUNDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
 	})
 
 	it("should parse DOW filter in complex expression", function() {
 		const expression = "TimeOfDay() BETWEEN 08:00 AND 17:00 ON MONDAY TO FRIDAY && Event(\"type\") == \"work\""
 		const il = RuleParser.toIL(expression)
-		const eightAm = { hours: 8, minutes: 0, tod: 800, dow: ["MONDAY", "FRIDAY"] }
-		const fivePm = { hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY", "FRIDAY"] }
+		const eightAm = { hours: 8, minutes: 0, tod: 800, dow: "FRIDAY" }
+		const fivePm = { hours: 17, minutes: 0, tod: 1700, dow: "FRIDAY" }
 		expect(il).to.be.eql([
 			"And",
 			["Between", ["TimeOfDay"], ["Value", eightAm], ["Value", fivePm]],
@@ -114,24 +114,24 @@ describe("Day-of-Week (DOW) Filters", function() {
 	it("should parse lowercase dow in function argument", function() {
 		const expression = "Duration(BETWEEN 01:00 AND 03:00 ON monday)"
 		const il = RuleParser.toIL(expression)
-		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: ["MONDAY"] }
-		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: ["MONDAY"] }
+		const oneAm = { hours: 1, minutes: 0, tod: 100, dow: "MONDAY" }
+		const threeAm = { hours: 3, minutes: 0, tod: 300, dow: "MONDAY" }
 		expect(il).to.be.eql(["Duration", ["TimePeriodBetween", oneAm, threeAm]])
 	})
 
 	it("should parse mixed case dow keywords", function() {
 		const expression = "A(BETWEEN 12:00 AND 15:00 ON Monday TO Friday)"
 		const il = RuleParser.toIL(expression)
-		const noon = { hours: 12, minutes: 0, tod: 1200, dow: ["MONDAY", "FRIDAY"] }
-		const threePm = { hours: 15, minutes: 0, tod: 1500, dow: ["MONDAY", "FRIDAY"] }
+		const noon = { hours: 12, minutes: 0, tod: 1200, dow: "FRIDAY" }
+		const threePm = { hours: 15, minutes: 0, tod: 1500, dow: "FRIDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", noon, threePm]])
 	})
 
 	it("should handle DOW with midnight crossing times", function() {
 		const expression = "A(BETWEEN 22:00 AND 02:00 ON FRIDAY TO SATURDAY)"
 		const il = RuleParser.toIL(expression)
-		const tenPm = { hours: 22, minutes: 0, tod: 2200, dow: ["FRIDAY", "SATURDAY"] }
-		const twoAm = { hours: 2, minutes: 0, tod: 200, dow: ["FRIDAY", "SATURDAY"] }
+		const tenPm = { hours: 22, minutes: 0, tod: 2200, dow: "SATURDAY" }
+		const twoAm = { hours: 2, minutes: 0, tod: 200, dow: "SATURDAY" }
 		expect(il).to.be.eql(["A", ["TimePeriodBetween", tenPm, twoAm]])
 	})
 

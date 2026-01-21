@@ -42,10 +42,10 @@ Abbreviations: `MON`, `TUE`, `WED`, `THU`, `THUR`, `FRI`, `SAT`, `SUN`
 ["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900}, {hours: 17, minutes: 0, tod: 1700}]
 
 // Time of day range with single day filter
-["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY"]}]
+["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: "MONDAY"}, {hours: 17, minutes: 0, tod: 1700, dow: "MONDAY"}]
 
-// Time of day range with day range filter (dow array contains [start_day, end_day] for range)
-["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY", "FRIDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY", "FRIDAY"]}]
+// Time of day range with day range filter (dow is set to the end day)
+["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: "FRIDAY"}, {hours: 17, minutes: 0, tod: 1700, dow: "FRIDAY"}]
 
 // Time units with day of week filter
 ["TimePeriodBetween", 3600, 7200, "MONDAY", "FRIDAY"]
