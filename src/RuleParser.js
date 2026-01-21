@@ -89,15 +89,7 @@ class RuleParser {
     static _parseTimePeriod(tp){
         switch(tp.type){
             case 'time_period_const':
-                // time_period_const can be either a simple string like "today" 
-                // or it can have children (for time_period_ago)
-                if (tp.children && tp.children.length > 0) {
-                    // This is a time_period_ago, which has a number_time child
-                    return ["TimePeriodConst", tp.text]
-                } else {
-                    // This is a simple constant like "today"
-                    return ["TimePeriodConst", tp.text]
-                }
+                return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
                 // time_period_ago_between has children[0] = number_time, children[1] = between_tod_only
                 const betweenTodOnly = tp.children[1]

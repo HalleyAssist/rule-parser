@@ -57,7 +57,7 @@ between_tod_only     ||= "BETWEEN" WS+ between_tod
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
 OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
-AGO                  ||= "ago"
+AGO                  ||= "AGO"
 GT                   ::= ">"
 LT                   ::= "<"
 GTE                  ::= ">="
