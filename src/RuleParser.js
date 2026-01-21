@@ -30,15 +30,15 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
-// Map all possible DOW representations to canonical 3-letter uppercase form
+// Map all possible DOW representations to canonical lowercase full form
 const DOW_MAP = {
-    'MONDAY': 'MON', 'MON': 'MON',
-    'TUESDAY': 'TUE', 'TUE': 'TUE',
-    'WEDNESDAY': 'WED', 'WED': 'WED',
-    'THURSDAY': 'THU', 'THU': 'THU', 'THUR': 'THU',
-    'FRIDAY': 'FRI', 'FRI': 'FRI',
-    'SATURDAY': 'SAT', 'SAT': 'SAT',
-    'SUNDAY': 'SUN', 'SUN': 'SUN',
+    'MONDAY': 'monday', 'MON': 'monday',
+    'TUESDAY': 'tuesday', 'TUE': 'tuesday',
+    'WEDNESDAY': 'wednesday', 'WED': 'wednesday',
+    'THURSDAY': 'thursday', 'THU': 'thursday', 'THUR': 'thursday',
+    'FRIDAY': 'friday', 'FRI': 'friday',
+    'SATURDAY': 'saturday', 'SAT': 'saturday',
+    'SUNDAY': 'sunday', 'SUN': 'sunday',
 };
 const normalizeDow = (text) => {
     const upper = text.toUpperCase();
@@ -157,10 +157,18 @@ class RuleParser {
                 return ["TimePeriodBetween", startTod, endTod]
             }
             case 'between_time_only': {
-                // between_number_only has children[0] = between_number node
-                const betweenNumber = tp.children[0]
-                const startValue = RuleParser.__parseValue(betweenNumber.children[0])
-                const endValue = RuleParser.__parseValue(betweenNumber.children[1])
+                // between_time_only has children[0] = between_number_time node
+                const betweenNumberTime = tp.children[0]
+                const startValue = RuleParser.__parseValue(betweenNumberTime.children[0])
+                const endValue = RuleParser.__parseValue(betweenNumberTime.children[1])
+                
+                // Check if there's a dow_range at betweenNumberTime.children[2]
+                // Note: startValue and endValue are numbers (seconds), not objects like TOD
+                // So we need to return them wrapped in an object if DOW is present
+                if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
+                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
+                    return ["TimePeriodBetween", { seconds: startValue, dow }, { seconds: endValue, dow }]
+                }
                 
                 return ["TimePeriodBetween", startValue, endValue]
             }

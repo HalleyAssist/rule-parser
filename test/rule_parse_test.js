@@ -1271,6 +1271,122 @@ describe("RuleParser", function () {
 		})
 	})
 
+	// Tests for BETWEEN X NOUN and Y NOUN ON MONDAY to TUESDAY
+	describe("BETWEEN Time Units with DOW Filters", function() {
+		it("should parse BETWEEN time units with single DOW", function() {
+			const expression = "A(BETWEEN 1 HOUR AND 2 HOURS ON MONDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 3600, dow: ["monday"] }
+			const end = { seconds: 7200, dow: ["monday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN time units with DOW range", function() {
+			const expression = "A(BETWEEN 5 MINUTES AND 30 MINUTES ON MONDAY TO FRIDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 300, dow: ["monday", "friday"] }
+			const end = { seconds: 1800, dow: ["monday", "friday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN days with DOW filter", function() {
+			const expression = "A(BETWEEN 1 DAY AND 7 DAYS ON SATURDAY TO SUNDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 86400, dow: ["saturday", "sunday"] }
+			const end = { seconds: 604800, dow: ["saturday", "sunday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN weeks with DOW filter", function() {
+			const expression = "A(BETWEEN 1 WEEK AND 2 WEEKS ON TUESDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 604800, dow: ["tuesday"] }
+			const end = { seconds: 1209600, dow: ["tuesday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN seconds with DOW range", function() {
+			const expression = "A(BETWEEN 10 SECONDS AND 60 SECONDS ON WEDNESDAY TO THURSDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 10, dow: ["wednesday", "thursday"] }
+			const end = { seconds: 60, dow: ["wednesday", "thursday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN minutes with all day names", function() {
+			const expression = "A(BETWEEN 15 MINS AND 45 MINS ON THURSDAY TO FRIDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 900, dow: ["thursday", "friday"] }
+			const end = { seconds: 2700, dow: ["thursday", "friday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN with abbreviated DOW names", function() {
+			const expression = "A(BETWEEN 2 HOURS AND 4 HOURS ON MON TO FRI)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 7200, dow: ["monday", "friday"] }
+			const end = { seconds: 14400, dow: ["monday", "friday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse BETWEEN with mixed case time units and DOW", function() {
+			const expression = "A(BETWEEN 1 Hour AND 3 Hours ON monday)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 3600, dow: ["monday"] }
+			const end = { seconds: 10800, dow: ["monday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should work in complex expressions with DOW", function() {
+			const expression = "Duration(BETWEEN 1 HOUR AND 4 HOURS ON MONDAY TO FRIDAY) && Active() == TRUE"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 3600, dow: ["monday", "friday"] }
+			const end = { seconds: 14400, dow: ["monday", "friday"] }
+			expect(il).to.be.eql([
+				"And",
+				["Duration", ["TimePeriodBetween", start, end]],
+				["Eq", ["Active"], ["Value", true]]
+			])
+		})
+
+		it("should parse BETWEEN time units without DOW (regression test)", function() {
+			const expression = "A(BETWEEN 1 DAY AND 10 DAYS)"
+			const il = RuleParser.toIL(expression)
+			// Should still work without DOW - no dow property
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", 86400, 864000]])
+		})
+
+		it("should parse BETWEEN with dash separator and DOW", function() {
+			const expression = "A(BETWEEN 1 HOUR-2 HOURS ON SATURDAY)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 3600, dow: ["saturday"] }
+			const end = { seconds: 7200, dow: ["saturday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+
+		it("should parse multiple DOW ranges in same expression", function() {
+			const expression = "A(BETWEEN 1 HOUR AND 2 HOURS ON MONDAY) && B(BETWEEN 3 HOURS AND 4 HOURS ON FRIDAY)"
+			const il = RuleParser.toIL(expression)
+			const startA = { seconds: 3600, dow: ["monday"] }
+			const endA = { seconds: 7200, dow: ["monday"] }
+			const startB = { seconds: 10800, dow: ["friday"] }
+			const endB = { seconds: 14400, dow: ["friday"] }
+			expect(il).to.be.eql([
+				"And",
+				["A", ["TimePeriodBetween", startA, endA]],
+				["B", ["TimePeriodBetween", startB, endB]]
+			])
+		})
+
+		it("should parse BETWEEN with single day abbreviations", function() {
+			const expression = "A(BETWEEN 30 MINUTES AND 90 MINUTES ON SAT TO SUN)"
+			const il = RuleParser.toIL(expression)
+			const start = { seconds: 1800, dow: ["saturday", "sunday"] }
+			const end = { seconds: 5400, dow: ["saturday", "sunday"] }
+			expect(il).to.be.eql(["A", ["TimePeriodBetween", start, end]])
+		})
+	})
+
 	// Tests for tightened arithmetic operator restrictions
 	describe("Arithmetic Operator Restrictions", function() {
 		it("should reject arithmetic with string values", function() {
