@@ -59,8 +59,8 @@ describe("Error Handling and Edge Cases", function() {
 		it("should normalize THU to THURSDAY", function() {
 			const expression = "A(BETWEEN 01:00 AND 03:00 ON THU)"
 			const il = RuleParser.toIL(expression)
-			const oneAm = { hours: 1, minutes: 0, tod: 100, dow: ["THURSDAY"] }
-			const threeAm = { hours: 3, minutes: 0, tod: 300, dow: ["THURSDAY"] }
+			const oneAm = { hours: 1, minutes: 0, tod: 100, dow: "THURSDAY" }
+			const threeAm = { hours: 3, minutes: 0, tod: 300, dow: "THURSDAY" }
 			expect(il).to.be.eql(["A", ["TimePeriodBetween", oneAm, threeAm]])
 		})
 	})

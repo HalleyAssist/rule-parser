@@ -91,25 +91,22 @@ class RuleParser {
         return ret
     }
     static _parseDowRange(dowRange) {
-        const dow = [];
         // dow_range can have 1 or 2 children (single day or range)
         if (dowRange.children.length === 1) {
-            // Single day: ON MONDAY
-            dow.push(normalizeDow(dowRange.children[0].text));
+            // Single day: ON MONDAY - return just the day string
+            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[0].text) };
         } else if (dowRange.children.length === 2) {
-            // Range: ON MONDAY TO WEDNESDAY
-            dow.push(normalizeDow(dowRange.children[0].text));
-            dow.push(normalizeDow(dowRange.children[1].text));
+            // Range: ON MONDAY TO FRIDAY - return both start and end days
+            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[1].text) };
         } else {
             throw new Error(`Invalid dow_range with ${dowRange.children.length} children`);
         }
-        return dow;
     }
     static _addDowToTods(startTod, endTod, dowRange) {
         if (dowRange && dowRange.type === 'dow_range') {
             const dow = RuleParser._parseDowRange(dowRange)
-            startTod.dow = dow
-            endTod.dow = dow
+            startTod.dow = dow.start
+            endTod.dow = dow.end
         }
     }
     static _parseTimePeriod(tp){
@@ -180,8 +177,13 @@ class RuleParser {
                 // If DOW filters are provided, append them as additional parameters
                 if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
                     const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
-                    // Append DOW as additional arguments: ["TimePeriodBetween", start, end, "MONDAY"] or ["TimePeriodBetween", start, end, "MONDAY", "FRIDAY"]
-                    return ["TimePeriodBetween", startValue, endValue, ...dow]
+                    if (dow.start === dow.end) {
+                        // Single day: ["TimePeriodBetween", start, end, "MONDAY"]
+                        return ["TimePeriodBetween", startValue, endValue, dow.start]
+                    } else {
+                        // Range: ["TimePeriodBetween", start, end, "MONDAY", "FRIDAY"]
+                        return ["TimePeriodBetween", startValue, endValue, dow.start, dow.end]
+                    }
                 }
                 
                 return ["TimePeriodBetween", startValue, endValue]

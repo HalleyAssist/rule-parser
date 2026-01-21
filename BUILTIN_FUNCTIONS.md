@@ -21,12 +21,12 @@ Represents a time range, optionally filtered by day of week.
 **Arguments:**
 - `fromTp`: Start of time period. Can be:
   - A number representing seconds
-  - A time of day object: `{hours, minutes, tod}` or `{hours, minutes, tod, dow: [...]}`
+  - A time of day object: `{hours, minutes, tod}` or `{hours, minutes, tod, dow: "..."}`
 - `toTp`: End of time period. Same format as `fromTp`
 - `fromDow` (optional): Starting day of week filter (e.g., "MONDAY")
 - `toDow` (optional): Ending day of week filter (e.g., "FRIDAY")
 
-**Note:** When using day of week ranges (e.g., "MONDAY TO FRIDAY"), the `dow` array contains only the start and end days `["MONDAY", "FRIDAY"]`, not all days in between. This represents a range from Monday through Friday inclusive.
+**Note:** For day of week ranges (e.g., "MONDAY TO FRIDAY"), the start object contains the start day in its `dow` field and the end object contains the end day. This represents a range from Monday through Friday inclusive.
 
 **Day of Week Values:**
 Valid days: `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`, `SUNDAY`
@@ -42,10 +42,10 @@ Abbreviations: `MON`, `TUE`, `WED`, `THU`, `THUR`, `FRI`, `SAT`, `SUN`
 ["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900}, {hours: 17, minutes: 0, tod: 1700}]
 
 // Time of day range with single day filter
-["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY"]}]
+["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: "MONDAY"}, {hours: 17, minutes: 0, tod: 1700, dow: "MONDAY"}]
 
-// Time of day range with day range filter (dow array contains [start_day, end_day] for range)
-["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY", "FRIDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY", "FRIDAY"]}]
+// Time of day range with day range filter (start has start day, end has end day)
+["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: "MONDAY"}, {hours: 17, minutes: 0, tod: 1700, dow: "FRIDAY"}]
 
 // Time units with day of week filter
 ["TimePeriodBetween", 3600, 7200, "MONDAY", "FRIDAY"]
