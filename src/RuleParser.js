@@ -30,22 +30,32 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
-// Map all possible DOW representations to canonical 3-letter uppercase form
+// Map abbreviations to canonical uppercase full form
 const DOW_MAP = {
-    'MONDAY': 'MON', 'MON': 'MON',
-    'TUESDAY': 'TUE', 'TUE': 'TUE',
-    'WEDNESDAY': 'WED', 'WED': 'WED',
-    'THURSDAY': 'THU', 'THU': 'THU', 'THUR': 'THU',
-    'FRIDAY': 'FRI', 'FRI': 'FRI',
-    'SATURDAY': 'SAT', 'SAT': 'SAT',
-    'SUNDAY': 'SUN', 'SUN': 'SUN',
+    'MON': 'MONDAY',
+    'TUE': 'TUESDAY',
+    'WED': 'WEDNESDAY',
+    'THU': 'THURSDAY',
+    'THUR': 'THURSDAY',
+    'FRI': 'FRIDAY',
+    'SAT': 'SATURDAY',
+    'SUN': 'SUNDAY',
 };
+
+// Valid full day names
+const VALID_DAYS = new Set(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
+
 const normalizeDow = (text) => {
     const upper = text.toUpperCase();
-    if (!(upper in DOW_MAP)) {
-        throw new Error(`Invalid day of week: ${text}`);
+    // Check if it's an abbreviation first
+    if (upper in DOW_MAP) {
+        return DOW_MAP[upper];
     }
-    return DOW_MAP[upper];
+    // Otherwise, check if it's a valid full name
+    if (VALID_DAYS.has(upper)) {
+        return upper;
+    }
+    throw new Error(`Invalid day of week: ${text}`);
 };
 
 const Epsilon = 0.01
@@ -161,10 +171,18 @@ class RuleParser {
                 return ["TimePeriodBetween", startTod, endTod]
             }
             case 'between_time_only': {
-                // between_number_only has children[0] = between_number node
-                const betweenNumber = tp.children[0]
-                const startValue = RuleParser.__parseValue(betweenNumber.children[0])
-                const endValue = RuleParser.__parseValue(betweenNumber.children[1])
+                // between_time_only has children[0] = between_number_time node
+                const betweenNumberTime = tp.children[0]
+                const startValue = RuleParser.__parseValue(betweenNumberTime.children[0])
+                const endValue = RuleParser.__parseValue(betweenNumberTime.children[1])
+                
+                // Check if there's a dow_range at betweenNumberTime.children[2]
+                // If DOW filters are provided, append them as additional parameters
+                if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
+                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
+                    // Append DOW as additional arguments: ["TimePeriodBetween", start, end, "MONDAY"] or ["TimePeriodBetween", start, end, "MONDAY", "FRIDAY"]
+                    return ["TimePeriodBetween", startValue, endValue, ...dow]
+                }
                 
                 return ["TimePeriodBetween", startValue, endValue]
             }
