@@ -257,17 +257,25 @@ Addition operator (+).
 
 **Examples:**
 ```javascript
+// Non-constant expression (function call + constant)
 ["MathAdd", ["A"], ["Value", 5]]
-["MathAdd", ["Value", 10], ["Value", 20]]
-["MathAdd", ["Value", 3600], ["Value", 1800]]
+
+// Constant expressions are compiled at parse time
+// 10 + 20 compiles to:
+["Value", 30]
+
+// 1 hour + 30 minutes compiles to:
+["Value", 5400]
 ```
 
 **Rule Syntax:**
 ```
-A() + 5
-10 + 20
-1 hour + 30 minutes
+A() + 5           // Non-constant, not compiled
+10 + 20           // Constant, compiled to 30
+1 hour + 30 minutes   // Constant, compiled to 5400 seconds
 ```
+
+**Note:** When both operands are constant values, the addition is evaluated at parse time and replaced with a single `Value` node containing the result.
 
 ---
 
@@ -281,15 +289,21 @@ Subtraction operator (-).
 
 **Examples:**
 ```javascript
+// Non-constant expression
 ["MathSub", ["A"], ["B"]]
-["MathSub", ["Value", 100], ["Value", 25]]
+
+// Constant expression compiled at parse time
+// 100 - 25 compiles to:
+["Value", 75]
 ```
 
 **Rule Syntax:**
 ```
-A() - B()
-100 - 25
+A() - B()      // Non-constant, not compiled
+100 - 25       // Constant, compiled to 75
 ```
+
+**Note:** When both operands are constant values, the subtraction is evaluated at parse time and replaced with a single `Value` node containing the result.
 
 ---
 
@@ -303,15 +317,21 @@ Multiplication operator (*).
 
 **Examples:**
 ```javascript
-["MathMul", ["Value", 10], ["Value", 5]]
+// Non-constant expression
 ["MathMul", ["A"], ["Value", 2]]
+
+// Constant expression compiled at parse time
+// 10 * 5 compiles to:
+["Value", 50]
 ```
 
 **Rule Syntax:**
 ```
-10 * 5
-A() * 2
+A() * 2        // Non-constant, not compiled
+10 * 5         // Constant, compiled to 50
 ```
+
+**Note:** When both operands are constant values, the multiplication is evaluated at parse time and replaced with a single `Value` node containing the result.
 
 ---
 
@@ -325,15 +345,21 @@ Division operator (/).
 
 **Examples:**
 ```javascript
-["MathDiv", ["Value", 100], ["Value", 5]]
+// Non-constant expression
 ["MathDiv", ["A"], ["B"]]
+
+// Constant expression compiled at parse time
+// 100 / 5 compiles to:
+["Value", 20]
 ```
 
 **Rule Syntax:**
 ```
-100 / 5
-A() / B()
+A() / B()      // Non-constant, not compiled
+100 / 5        // Constant, compiled to 20
 ```
+
+**Note:** When both operands are constant values, the division is evaluated at parse time and replaced with a single `Value` node containing the result.
 
 ---
 
@@ -347,15 +373,21 @@ Modulus operator (%).
 
 **Examples:**
 ```javascript
-["MathMod", ["Value", 10], ["Value", 3]]
+// Non-constant expression
 ["MathMod", ["A"], ["B"]]
+
+// Constant expression compiled at parse time
+// 10 % 3 compiles to:
+["Value", 1]
 ```
 
 **Rule Syntax:**
 ```
-10 % 3
-A() % B()
+A() % B()      // Non-constant, not compiled
+10 % 3         // Constant, compiled to 1
 ```
+
+**Note:** When both operands are constant values, the modulus operation is evaluated at parse time and replaced with a single `Value` node containing the result.
 
 ---
 
@@ -619,9 +651,22 @@ Duration(1 hour + 30 minutes) > 5000
 ```javascript
 [
   "Gt",
-  ["Duration", ["MathAdd", ["Value", 3600], ["Value", 1800]]],
+  ["Duration", ["Value", 5400]],
   ["Value", 5000]
 ]
+```
+
+**Note:** As of the constant expression compilation feature, arithmetic operations on constant values (including time units) are evaluated at parse time and compiled into a single `Value` node. In the example above, `1 hour + 30 minutes` (3600 + 1800 seconds) is automatically compiled to `5400` seconds.
+
+**Additional Examples:**
+```javascript
+// 1 HOUR + 1 WEEK compiles to a single value
+// Rule: A() > 1 hour + 1 week
+["Gt", ["A"], ["Value", 608400]]  // 3600 + 604800 = 608400
+
+// Non-constant expressions are not compiled
+// Rule: A() + 1 hour
+["MathAdd", ["A"], ["Value", 3600]]  // A() is not constant, so no compilation
 ```
 
 ---
@@ -634,3 +679,4 @@ Duration(1 hour + 30 minutes) > 5000
 - Day of week names can be abbreviated or full names
 - Parentheses can be used to control evaluation order
 - Arithmetic operators only work with numeric values
+- **Constant Expression Compilation**: Arithmetic operations where both operands are constant values are automatically evaluated at parse time and replaced with a single `Value` node. This optimization applies to all arithmetic operators (`+`, `-`, `*`, `/`, `%`) and includes time unit expressions (e.g., `1 HOUR + 1 WEEK` becomes `["Value", 608400]`).

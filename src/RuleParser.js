@@ -289,11 +289,42 @@ class RuleParser {
         }
         throw new Error(`Unknown arithmetic operand type ${type}`)
     }
+    static _isConstantValue(expr){
+        // Check if an expression is a constant value
+        return Array.isArray(expr) && expr.length === 2 && expr[0] === 'Value' && typeof expr[1] === 'number'
+    }
+    
+    static _evaluateConstantArithmetic(operator, leftValue, rightValue){
+        // Evaluate constant arithmetic operations at parse time
+        switch(operator){
+            case 'MathAdd':
+                return leftValue + rightValue
+            case 'MathSub':
+                return leftValue - rightValue
+            case 'MathMul':
+                return leftValue * rightValue
+            case 'MathDiv':
+                return leftValue / rightValue
+            case 'MathMod':
+                return leftValue % rightValue
+            default:
+                return null
+        }
+    }
+    
     static _parseArithmeticResult(result){
         assert(result.children.length == 3)
         const partA = RuleParser._parseArithmeticOperand(result.children[0])
         const operatorFn = ArithmeticOperators[result.children[1].text]
         const partB = RuleParser.__parseArithmeticResult(result, 2)
+
+        // Compile out constant expressions
+        if (RuleParser._isConstantValue(partA) && RuleParser._isConstantValue(partB)) {
+            const result = RuleParser._evaluateConstantArithmetic(operatorFn, partA[1], partB[1])
+            if (result !== null) {
+                return ['Value', result]
+            }
+        }
 
         return [operatorFn, partA, partB]
     }
