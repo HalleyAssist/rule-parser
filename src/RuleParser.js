@@ -30,23 +30,32 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
-// Map all possible DOW representations to canonical uppercase full form
-// Using uppercase full names (e.g., 'MONDAY') for the intermediate language representation
+// Map abbreviations to canonical uppercase full form
 const DOW_MAP = {
-    'MONDAY': 'MONDAY', 'MON': 'MONDAY',
-    'TUESDAY': 'TUESDAY', 'TUE': 'TUESDAY',
-    'WEDNESDAY': 'WEDNESDAY', 'WED': 'WEDNESDAY',
-    'THURSDAY': 'THURSDAY', 'THU': 'THURSDAY', 'THUR': 'THURSDAY',
-    'FRIDAY': 'FRIDAY', 'FRI': 'FRIDAY',
-    'SATURDAY': 'SATURDAY', 'SAT': 'SATURDAY',
-    'SUNDAY': 'SUNDAY', 'SUN': 'SUNDAY',
+    'MON': 'MONDAY',
+    'TUE': 'TUESDAY',
+    'WED': 'WEDNESDAY',
+    'THU': 'THURSDAY',
+    'THUR': 'THURSDAY',
+    'FRI': 'FRIDAY',
+    'SAT': 'SATURDAY',
+    'SUN': 'SUNDAY',
 };
+
+// Valid full day names
+const VALID_DAYS = new Set(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
+
 const normalizeDow = (text) => {
     const upper = text.toUpperCase();
-    if (!(upper in DOW_MAP)) {
-        throw new Error(`Invalid day of week: ${text}`);
+    // Check if it's an abbreviation first
+    if (upper in DOW_MAP) {
+        return DOW_MAP[upper];
     }
-    return DOW_MAP[upper];
+    // Otherwise, check if it's a valid full name
+    if (VALID_DAYS.has(upper)) {
+        return upper;
+    }
+    throw new Error(`Invalid day of week: ${text}`);
 };
 
 const Epsilon = 0.01
