@@ -30,6 +30,24 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
+// Map all possible DOW representations to canonical 3-letter uppercase form
+const DOW_MAP = {
+    'MONDAY': 'MON', 'MON': 'MON',
+    'TUESDAY': 'TUE', 'TUE': 'TUE',
+    'WEDNESDAY': 'WED', 'WED': 'WED',
+    'THURSDAY': 'THU', 'THU': 'THU', 'THUR': 'THU',
+    'FRIDAY': 'FRI', 'FRI': 'FRI',
+    'SATURDAY': 'SAT', 'SAT': 'SAT',
+    'SUNDAY': 'SUN', 'SUN': 'SUN',
+};
+const normalizeDow = (text) => {
+    const upper = text.toUpperCase();
+    if (!(upper in DOW_MAP)) {
+        throw new Error(`Invalid day of week: ${text}`);
+    }
+    return DOW_MAP[upper];
+};
+
 const Epsilon = 0.01
 
 class RuleParser {
@@ -63,21 +81,19 @@ class RuleParser {
         return ret
     }
     static _parseDowRange(dowRange) {
-        const dow = []
-        
+        const dow = [];
         // dow_range can have 1 or 2 children (single day or range)
         if (dowRange.children.length === 1) {
             // Single day: ON MONDAY
-            dow.push(dowRange.children[0].text.toLowerCase())
+            dow.push(normalizeDow(dowRange.children[0].text));
         } else if (dowRange.children.length === 2) {
             // Range: ON MONDAY TO WEDNESDAY
-            dow.push(dowRange.children[0].text.toLowerCase())
-            dow.push(dowRange.children[1].text.toLowerCase())
+            dow.push(normalizeDow(dowRange.children[0].text));
+            dow.push(normalizeDow(dowRange.children[1].text));
         } else {
-            throw new Error(`Invalid dow_range with ${dowRange.children.length} children`)
+            throw new Error(`Invalid dow_range with ${dowRange.children.length} children`);
         }
-        
-        return dow
+        return dow;
     }
     static _addDowToTods(startTod, endTod, dowRange) {
         if (dowRange && dowRange.type === 'dow_range') {
