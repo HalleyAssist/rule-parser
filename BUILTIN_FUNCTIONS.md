@@ -26,6 +26,8 @@ Represents a time range, optionally filtered by day of week.
 - `fromDow` (optional): Starting day of week filter (e.g., "MONDAY")
 - `toDow` (optional): Ending day of week filter (e.g., "FRIDAY")
 
+**Note:** When using day of week ranges (e.g., "MONDAY TO FRIDAY"), the `dow` array contains only the start and end days `["MONDAY", "FRIDAY"]`, not all days in between. This represents a range from Monday through Friday inclusive.
+
 **Day of Week Values:**
 Valid days: `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`, `SUNDAY`
 
@@ -42,7 +44,7 @@ Abbreviations: `MON`, `TUE`, `WED`, `THU`, `THUR`, `FRI`, `SAT`, `SUN`
 // Time of day range with single day filter
 ["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY"]}]
 
-// Time of day range with day range filter
+// Time of day range with day range filter (dow array contains [start_day, end_day] for range)
 ["TimePeriodBetween", {hours: 9, minutes: 0, tod: 900, dow: ["MONDAY", "FRIDAY"]}, {hours: 17, minutes: 0, tod: 1700, dow: ["MONDAY", "FRIDAY"]}]
 
 // Time units with day of week filter
@@ -592,6 +594,7 @@ TimeOfDay() BETWEEN 08:00 AND 17:00 ON MONDAY TO FRIDAY && Event("type") == "wor
 ```
 
 **IL Representation:**
+Note: The dow array contains [start_day, end_day] to represent a range, not all days in the range.
 ```javascript
 [
   "And",
