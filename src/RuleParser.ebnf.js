@@ -23,7 +23,7 @@ arithmetic_result    ::= arithmetic_operand WS* arithmetic_operator WS* ( arithm
 
 simple_result        ::= fcall | value
 result               ::= arithmetic_result | simple_result
-value                ::= false | true | array | number_time | number | number_tod | time_period | string
+value                ::= false | true | array | time_period | number_time | number | number_tod | string
 BEGIN_ARRAY          ::= WS* #x5B WS*  /* [ left square bracket */
 BEGIN_OBJECT         ::= WS* #x7B WS*  /* { left curly bracket */
 END_ARRAY            ::= WS* #x5D WS*  /* ] right square bracket */
@@ -57,6 +57,7 @@ between_tod_only     ||= "BETWEEN" WS+ between_tod
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
 OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
+AGO                  ||= "ago"
 GT                   ::= ">"
 LT                   ::= "<"
 GTE                  ::= ">="
@@ -70,13 +71,15 @@ null                 ||= "null"
 true                 ||= "TRUE"
 array                ::= BEGIN_ARRAY (value (VALUE_SEPARATOR value)*)? END_ARRAY
 
-unit                 ||= "seconds" | "second" | "minutes" | "minute" | "min" | "mins" | "min" | "hours" | "hour" | "days" | "day" | "weeks" | "week"
+unit                 ||= "seconds" | "minutes" | "hours" | "weeks" | "days" | "second" | "minute" | "week" | "hour" | "day" | "mins" | "min"
 number               ::= "-"? ([0-9]+) ("." [0-9]+)? ("e" ( "-" | "+" )? ("0" | [1-9] [0-9]*))?
 number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
-time_period_const    ||= "today"
-time_period          ::= time_period_const | between_tod_only | between_time_only
+time_period_ago      ||= number_time WS+ AGO
+time_period_ago_between ||= number_time WS+ AGO WS+ between_tod_only
+time_period_const    ||= "today" | time_period_ago
+time_period          ::= time_period_ago_between | time_period_const | between_tod_only | between_time_only
 
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
 HEXDIG               ::= [a-fA-F0-9]
