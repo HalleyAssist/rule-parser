@@ -1271,7 +1271,7 @@ describe("RuleParser", function () {
 		})
 	})
 
-	// Tests for BETWEEN X NOUN and Y NOUN ON MONDAY to TUESDAY
+	// Tests for BETWEEN X TIME_UNIT and Y TIME_UNIT ON MONDAY to TUESDAY
 	describe("BETWEEN Time Units with DOW Filters", function() {
 		it("should parse BETWEEN time units with single DOW", function() {
 			const expression = "A(BETWEEN 1 HOUR AND 2 HOURS ON MONDAY)"

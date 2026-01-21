@@ -31,6 +31,8 @@ const LogicalOperators = {
 }
 
 // Map all possible DOW representations to canonical lowercase full form
+// Using lowercase full names (e.g., 'monday') for consistency with test expectations
+// and for better readability in the intermediate language representation
 const DOW_MAP = {
     'MONDAY': 'monday', 'MON': 'monday',
     'TUESDAY': 'tuesday', 'TUE': 'tuesday',
