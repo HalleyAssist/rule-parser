@@ -148,8 +148,8 @@ class RuleParser {
                 
                 // Check if there's a dow_range at betweenTod.children[2]
                 if (betweenTod.children.length > 2) {
-                    startTod = {seconds: startTod, dow: null}
-                    endTod = {seconds: endTod, dow: null}
+                    if(typeof startTod === 'number') startTod = {seconds: startTod, dow: null}
+                    if(typeof endTod === 'number') endTod = {seconds: endTod, dow: null}
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
@@ -163,8 +163,8 @@ class RuleParser {
                 
                 // Check if there's a dow_range at betweenTod.children[2]
                 if (betweenTod.children.length > 2) {
-                    startTod = {seconds: startTod, dow: null}
-                    endTod = {seconds: endTod, dow: null}
+                    if(typeof startTod === 'number') startTod = {seconds: startTod, dow: null}
+                    if(typeof endTod === 'number') endTod = {seconds: endTod, dow: null}
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
