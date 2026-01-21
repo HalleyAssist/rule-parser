@@ -2,6 +2,10 @@ const
 	RuleParser = require("../"),
 	{ expect } = require('chai')
 
+const ALL_TIME_UNITS = [
+	'second', 'seconds', 'minute', 'minutes', 'min', 'mins', 'hour', 'hours', 'day', 'days', 'week', 'weeks'
+]
+
 describe("RuleParser", function () {
 	it("parse basic", function () {
 		expect(RuleParser.toIL("1 > 2")).to.be.eql(["Gt", ["Value", 1], ["Value", 2]])
@@ -91,10 +95,7 @@ describe("RuleParser", function () {
 		expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', oneAm, midnight]])
 	})
 	it("should be able to parse N UNIT AGO", function () {
-		const units = [
-			'second', 'seconds', 'minute', 'minutes', 'min', 'mins', 'hour', 'hours', 'day', 'days', 'week', 'weeks'
-		]
-		for (const unit of units) {
+		for (const unit of ALL_TIME_UNITS) {
 			const expression1 = `RoomDuration(3 ${unit} AGO)`
 			const il = RuleParser.toIL(expression1)
 			expect(il).to.be.eql(['RoomDuration', ['TimePeriodConst', `3 ${unit} AGO`]])
@@ -108,10 +109,7 @@ describe("RuleParser", function () {
 		expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', startTod, endTod]])
 	})
 	it("should be able to parse all units with AGO BETWEEN", function () {
-		const units = [
-			'second', 'seconds', 'minute', 'minutes', 'min', 'mins', 'hour', 'hours', 'day', 'days', 'week', 'weeks'
-		]
-		for (const unit of units) {
+		for (const unit of ALL_TIME_UNITS) {
 			const expression1 = `RoomDuration(1 ${unit} AGO BETWEEN 01:00 AND 02:00)`
 			const il = RuleParser.toIL(expression1)
 			const startTod = {hours: 1, minutes: 0, tod: 100}
