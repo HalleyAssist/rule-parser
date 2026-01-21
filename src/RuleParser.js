@@ -133,11 +133,13 @@ class RuleParser {
                 // time_period_ago_between has children[0] = number_time, children[1] = between_tod_only
                 const betweenTodOnly = tp.children[1]
                 const betweenTod = betweenTodOnly.children[0]
-                const startTod = RuleParser.__parseValue(betweenTod.children[0])
-                const endTod = RuleParser.__parseValue(betweenTod.children[1])
+                let startTod = RuleParser.__parseValue(betweenTod.children[0])
+                let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
                 // Check if there's a dow_range at betweenTod.children[2]
                 if (betweenTod.children.length > 2) {
+                    startTod = {seconds: startTod, dow: null}
+                    endTod = {seconds: endTod, dow: null}
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
@@ -146,11 +148,13 @@ class RuleParser {
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
                 const betweenTod = tp.children[0]
-                const startTod = RuleParser.__parseValue(betweenTod.children[0])
-                const endTod = RuleParser.__parseValue(betweenTod.children[1])
+                let startTod = RuleParser.__parseValue(betweenTod.children[0])
+                let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
                 // Check if there's a dow_range at betweenTod.children[2]
                 if (betweenTod.children.length > 2) {
+                    startTod = {seconds: startTod, dow: null}
+                    endTod = {seconds: endTod, dow: null}
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
