@@ -102,8 +102,10 @@ describe("Time Periods and Units", function() {
 	})
 
 	it("should parse time values in arithmetic", function() {
+		// Constants are now compiled at parse time
+		// 1 hour + 30 minutes = 3600 + 1800 = 5400
 		expect(RuleParser.toIL("A(1 hour + 30 minutes)"))
-			.to.be.eql(["A", ["MathAdd", ["Value", 3600], ["Value", 1800]]])
+			.to.be.eql(["A", ["Value", 5400]])
 	})
 })
 
@@ -138,7 +140,8 @@ describe("Function Call Variations", function() {
 	})
 
 	it("should parse function with arithmetic in arguments", function() {
+		// Constants are now compiled at parse time
 		expect(RuleParser.toIL("Func(1 + 2)"))
-			.to.be.eql(["Func", ["MathAdd", ["Value", 1], ["Value", 2]]])
+			.to.be.eql(["Func", ["Value", 3]])
 	})
 })

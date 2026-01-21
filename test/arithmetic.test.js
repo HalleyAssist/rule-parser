@@ -39,18 +39,20 @@ describe("Arithmetic Operators", function() {
 	})
 
 	it("should parse arithmetic with numbers", function() {
-		expect(RuleParser.toIL("10 + 5")).to.be.eql(["MathAdd", ["Value", 10], ["Value", 5]])
-		expect(RuleParser.toIL("10 - 5")).to.be.eql(["MathSub", ["Value", 10], ["Value", 5]])
-		expect(RuleParser.toIL("10 * 5")).to.be.eql(["MathMul", ["Value", 10], ["Value", 5]])
-		expect(RuleParser.toIL("10 / 5")).to.be.eql(["MathDiv", ["Value", 10], ["Value", 5]])
-		expect(RuleParser.toIL("10 % 3")).to.be.eql(["MathMod", ["Value", 10], ["Value", 3]])
+		// Constants are now compiled at parse time
+		expect(RuleParser.toIL("10 + 5")).to.be.eql(["Value", 15])
+		expect(RuleParser.toIL("10 - 5")).to.be.eql(["Value", 5])
+		expect(RuleParser.toIL("10 * 5")).to.be.eql(["Value", 50])
+		expect(RuleParser.toIL("10 / 5")).to.be.eql(["Value", 2])
+		expect(RuleParser.toIL("10 % 3")).to.be.eql(["Value", 1])
 	})
 
 	it("should respect operator precedence (multiplication before addition)", function() {
 		// Note: The parser doesn't enforce precedence; it parses left-to-right
 		// This test documents the actual behavior
+		// Constants are now compiled: 3 * 4 = 12, then 2 + 12 = 14
 		expect(RuleParser.toIL("2 + 3 * 4"))
-			.to.be.eql(["MathAdd", ["Value", 2], ["MathMul", ["Value", 3], ["Value", 4]]])
+			.to.be.eql(["Value", 14])
 	})
 
 	it("should parse arithmetic in comparisons", function() {
@@ -122,7 +124,8 @@ describe("Arithmetic Operator Restrictions", function() {
 
 	it("should allow arithmetic with numbers", function() {
 		expect(RuleParser.toIL("A() + 5")).to.be.eql(["MathAdd", ["A"], ["Value", 5]])
-		expect(RuleParser.toIL("10 * 2")).to.be.eql(["MathMul", ["Value", 10], ["Value", 2]])
+		// Constants are now compiled at parse time
+		expect(RuleParser.toIL("10 * 2")).to.be.eql(["Value", 20])
 	})
 
 	it("should allow arithmetic with function calls", function() {
