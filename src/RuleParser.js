@@ -90,6 +90,20 @@ class RuleParser {
         switch(tp.type){
             case 'time_period_const':
                 return ["TimePeriodConst", tp.text]
+            case 'time_period_ago_between': {
+                // time_period_ago_between has children[0] = number_time, children[1] = between_tod_only
+                const betweenTodOnly = tp.children[1]
+                const betweenTod = betweenTodOnly.children[0]
+                const startTod = RuleParser.__parseValue(betweenTod.children[0])
+                const endTod = RuleParser.__parseValue(betweenTod.children[1])
+                
+                // Check if there's a dow_range at betweenTod.children[2]
+                if (betweenTod.children.length > 2) {
+                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
+                }
+                
+                return ["TimePeriodBetween", startTod, endTod]
+            }
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
                 const betweenTod = tp.children[0]
