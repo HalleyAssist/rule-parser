@@ -76,8 +76,8 @@ number               ::= "-"? ([0-9]+) ("." [0-9]+)? ("e" ( "-" | "+" )? ("0" | 
 number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
-time_period_ago      ||= number_time WS+ AGO
-time_period_ago_between ||= number_time WS+ AGO WS+ between_tod_only
+time_period_ago      ||= number_time (WS+ number_time)* WS+ AGO
+time_period_ago_between ||= number_time (WS+ number_time)* WS+ AGO WS+ between_tod_only
 time_period_const    ||= "today" | time_period_ago
 time_period          ::= time_period_ago_between | time_period_const | between_tod_only | between_time_only
 

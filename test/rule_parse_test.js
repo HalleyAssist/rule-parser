@@ -98,7 +98,7 @@ describe("RuleParser", function () {
 		for (const unit of ALL_TIME_UNITS) {
 			const expression1 = `RoomDuration(3 ${unit} AGO)`
 			const il = RuleParser.toIL(expression1)
-			expect(il).to.be.eql(['RoomDuration', ['TimePeriodConst', `3 ${unit} AGO`]])
+			expect(il).to.be.eql(['RoomDuration', ['TimePeriodConstAgo', 3, unit.toUpperCase()]])
 		}
 	})
 	it("should be able to parse N UNIT AGO BETWEEN", function () {
@@ -116,6 +116,22 @@ describe("RuleParser", function () {
 			const endTod = {hours: 2, minutes: 0, tod: 200}
 			expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', startTod, endTod]])
 		}
+	})
+	it("should be able to parse composite time expressions with AGO", function () {
+		// Test 1 WEEK 1 HOUR AGO -> should be 1 week (604800 seconds) + 1 hour (3600 seconds) = 608400 seconds
+		const expression1 = `RoomDuration(1 WEEK 1 HOUR AGO)`
+		const il1 = RuleParser.toIL(expression1)
+		expect(il1).to.be.eql(['RoomDuration', ['TimePeriodConstAgo', 608400, 'SECONDS']])
+
+		// Test 2 DAYS 3 HOURS AGO -> should be 2 days (172800 seconds) + 3 hours (10800 seconds) = 183600 seconds
+		const expression2 = `RoomDuration(2 DAYS 3 HOURS AGO)`
+		const il2 = RuleParser.toIL(expression2)
+		expect(il2).to.be.eql(['RoomDuration', ['TimePeriodConstAgo', 183600, 'SECONDS']])
+
+		// Test 1 HOUR 30 MINUTES AGO -> should be 1 hour (3600 seconds) + 30 minutes (1800 seconds) = 5400 seconds
+		const expression3 = `RoomDuration(1 HOUR 30 MINUTES AGO)`
+		const il3 = RuleParser.toIL(expression3)
+		expect(il3).to.be.eql(['RoomDuration', ['TimePeriodConstAgo', 5400, 'SECONDS']])
 	})
 	it("should be able to parse parenthesis", function () {
 		const expression1 = `(A()==2 and B()==1) and (C(2) && D(1))`
