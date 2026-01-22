@@ -140,24 +140,28 @@ class RuleParser {
                 // time_period_ago_between has: number_time (WS+ number_time)* WS+ AGO WS+ between_tod_only
                 // We need to extract all number_time children and sum them up, then return TimePeriodBetweenAgo
                 let totalSeconds = 0
-                let lastBetweenTodOnlyIndex = -1
+                let betweenTodOnly = null
                 
                 // Find all number_time children and the between_tod_only child
                 for (let i = 0; i < tp.children.length; i++) {
                     if (tp.children[i].type === 'number_time') {
                         totalSeconds += RuleParser.__parseValue(tp.children[i])
                     } else if (tp.children[i].type === 'between_tod_only') {
-                        lastBetweenTodOnlyIndex = i
+                        betweenTodOnly = tp.children[i]
                     }
                 }
                 
-                // Get the between_tod_only node
-                const betweenTodOnly = tp.children[lastBetweenTodOnlyIndex]
+                // This should always be present based on the grammar, but check defensively
+                if (!betweenTodOnly) {
+                    throw new Error('time_period_ago_between requires between_tod_only child')
+                }
+                
                 const betweenTod = betweenTodOnly.children[0]
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
                 // Check if there's a dow_range at betweenTod.children[2]
+                // Note: startTod and endTod should always be objects from number_tod parsing
                 if (betweenTod.children.length > 2) {
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
