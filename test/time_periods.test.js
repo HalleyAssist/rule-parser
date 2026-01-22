@@ -107,6 +107,11 @@ describe("Time Periods and Units", function() {
 		expect(RuleParser.toIL("A(1 hour + 30 minutes)"))
 			.to.be.eql(["A", ["Value", 5400]])
 	})
+
+	it("should parse BETWEEN 1 HOURS AND 10 DAYS", function() {
+		const il = RuleParser.toIL("A(BETWEEN 1 HOURS AND 10 DAYS)")
+		expect(il).to.be.eql(["A", ["TimePeriodBetween", 3600, 864000]])
+	})	
 })
 
 describe("Function Call Variations", function() {
