@@ -21,6 +21,16 @@ describe("Edge Cases and Special Scenarios", function() {
 				.to.be.eql(["A", ["Value", 1], ["Value", 2]])
 		})
 
+		it("should handle whitespace after expression", function() {
+			expect(RuleParser.toIL("A(1,2)    "))
+				.to.be.eql(["A", ["Value", 1], ["Value", 2]])
+		})
+
+		it("should handle whitespace before expression", function() {
+			expect(RuleParser.toIL("   A(1,2)"))
+				.to.be.eql(["A", ["Value", 1], ["Value", 2]])
+		})
+
 		it("should handle whitespace in arrays", function() {
 			expect(RuleParser.toIL("A( [ 1 , 2 , 3 ] )"))
 				.to.be.eql(["A", ["Value", [1, 2, 3]]])

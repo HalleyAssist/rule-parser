@@ -68,7 +68,7 @@ class RuleParser {
             ParserCache = new Parser(ParserRules, {debug: false})
         }
 
-        ret = ParserCache.getAST(txt, 'statement_main');
+        ret = ParserCache.getAST(txt.trim(), 'statement_main');
         
         if(ret){
             return ret.children[0]
