@@ -51,16 +51,34 @@ describe("Time Periods and Units", function() {
 		const il = RuleParser.toIL(expression1)
 		const startTod = {hours: 0, minutes: 40, tod: 40}
 		const endTod = {hours: 20, minutes: 10, tod: 2010}
-		expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', startTod, endTod]])
+		// 1 WEEK = 604800 seconds
+		expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', 604800, startTod, endTod]])
 	})
 
 	it("should be able to parse all units with AGO BETWEEN", function () {
+		// Map each unit to its value in seconds
+		const unitToSeconds = {
+			'second': 1,
+			'seconds': 1,
+			'minute': 60,
+			'minutes': 60,
+			'min': 60,
+			'mins': 60,
+			'hour': 3600,
+			'hours': 3600,
+			'day': 86400,
+			'days': 86400,
+			'week': 604800,
+			'weeks': 604800
+		}
+		
 		for (const unit of ALL_TIME_UNITS) {
 			const expression1 = `RoomDuration(1 ${unit} AGO BETWEEN 01:00 AND 02:00)`
 			const il = RuleParser.toIL(expression1)
 			const startTod = {hours: 1, minutes: 0, tod: 100}
 			const endTod = {hours: 2, minutes: 0, tod: 200}
-			expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetween', startTod, endTod]])
+			const expectedSeconds = unitToSeconds[unit]
+			expect(il).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', expectedSeconds, startTod, endTod]])
 		}
 	})
 
@@ -79,6 +97,41 @@ describe("Time Periods and Units", function() {
 		const expression3 = `RoomDuration(1 HOUR 30 MINUTES AGO)`
 		const il3 = RuleParser.toIL(expression3)
 		expect(il3).to.be.eql(['RoomDuration', ['TimePeriodConstAgo', 5400, 'SECONDS']])
+	})
+
+	it("should parse composite time expressions with AGO BETWEEN", function () {
+		// Test 1 WEEK 1 HOUR AGO BETWEEN 01:00 AND 02:00
+		const expression1 = `RoomDuration(1 WEEK 1 HOUR AGO BETWEEN 01:00 AND 02:00)`
+		const il1 = RuleParser.toIL(expression1)
+		const startTod = {hours: 1, minutes: 0, tod: 100}
+		const endTod = {hours: 2, minutes: 0, tod: 200}
+		// 1 WEEK (604800) + 1 HOUR (3600) = 608400 seconds
+		expect(il1).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', 608400, startTod, endTod]])
+
+		// Test 2 DAYS 3 HOURS AGO BETWEEN 09:00 AND 17:00
+		const expression2 = `RoomDuration(2 DAYS 3 HOURS AGO BETWEEN 09:00 AND 17:00)`
+		const il2 = RuleParser.toIL(expression2)
+		const startTod2 = {hours: 9, minutes: 0, tod: 900}
+		const endTod2 = {hours: 17, minutes: 0, tod: 1700}
+		// 2 DAYS (172800) + 3 HOURS (10800) = 183600 seconds
+		expect(il2).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', 183600, startTod2, endTod2]])
+	})
+
+	it("should parse AGO BETWEEN with DOW filters", function () {
+		// Test 1 WEEK AGO BETWEEN 09:00 AND 17:00 ON MONDAY
+		const expression1 = `RoomDuration(1 WEEK AGO BETWEEN 09:00 AND 17:00 ON MONDAY)`
+		const il1 = RuleParser.toIL(expression1)
+		const startTod = {hours: 9, minutes: 0, tod: 900, dow: 'MONDAY'}
+		const endTod = {hours: 17, minutes: 0, tod: 1700, dow: 'MONDAY'}
+		expect(il1).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', 604800, startTod, endTod]])
+
+		// Test 3 DAYS AGO BETWEEN 08:00 AND 18:00 ON MONDAY TO FRIDAY
+		const expression2 = `RoomDuration(3 DAYS AGO BETWEEN 08:00 AND 18:00 ON MONDAY TO FRIDAY)`
+		const il2 = RuleParser.toIL(expression2)
+		const startTod2 = {hours: 8, minutes: 0, tod: 800, dow: 'MONDAY'}
+		const endTod2 = {hours: 18, minutes: 0, tod: 1800, dow: 'FRIDAY'}
+		// 3 DAYS = 259200 seconds
+		expect(il2).to.be.eql(['RoomDuration', ['TimePeriodBetweenAgo', 259200, startTod2, endTod2]])
 	})
 
 	it("should parse 'min' as minute unit", function() {
