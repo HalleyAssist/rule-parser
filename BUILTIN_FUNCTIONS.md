@@ -113,6 +113,42 @@ Duration(1 WEEK 1 HOUR AGO)
 
 ---
 
+### TimePeriodBetweenAgo(amount, startTod, endTod)
+
+Represents a time period in the past with a time-of-day range.
+
+**Arguments:**
+- `amount`: Number of seconds in the past (e.g., 604800 for 1 week)
+- `startTod`: Start time of day object: `{hours, minutes, tod}` or `{hours, minutes, tod, dow: "..."}`
+- `endTod`: End time of day object. Same format as `startTod`
+
+**Note:** Day of week filters can be applied to the time-of-day objects (see `TimePeriodBetween` for details).
+
+**Examples:**
+```javascript
+// 1 week ago between 00:40 and 20:10
+["TimePeriodBetweenAgo", 604800, {hours: 0, minutes: 40, tod: 40}, {hours: 20, minutes: 10, tod: 2010}]
+
+// 3 days ago between 09:00 and 17:00
+["TimePeriodBetweenAgo", 259200, {hours: 9, minutes: 0, tod: 900}, {hours: 17, minutes: 0, tod: 1700}]
+
+// 1 week ago between 09:00 and 17:00 on Monday
+["TimePeriodBetweenAgo", 604800, {hours: 9, minutes: 0, tod: 900, dow: "MONDAY"}, {hours: 17, minutes: 0, tod: 1700, dow: "MONDAY"}]
+
+// 1 week + 1 hour ago between 08:00 and 18:00
+["TimePeriodBetweenAgo", 608400, {hours: 8, minutes: 0, tod: 800}, {hours: 18, minutes: 0, tod: 1800}]
+```
+
+**Rule Syntax:**
+```
+RoomDuration(1 WEEK AGO BETWEEN 00:40 AND 20:10)
+Duration(3 DAYS AGO BETWEEN 09:00 AND 17:00)
+Duration(1 WEEK AGO BETWEEN 09:00 AND 17:00 ON MONDAY)
+Duration(1 WEEK 1 HOUR AGO BETWEEN 08:00 AND 18:00)
+```
+
+---
+
 ## Comparison Operators
 
 These operators compare two values and return a boolean result.

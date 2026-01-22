@@ -137,20 +137,32 @@ class RuleParser {
                 }
                 return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
-                // time_period_ago_between has children[0] = number_time, children[1] = between_tod_only
-                const betweenTodOnly = tp.children[1]
+                // time_period_ago_between has: number_time (WS+ number_time)* WS+ AGO WS+ between_tod_only
+                // We need to extract all number_time children and sum them up, then return TimePeriodBetweenAgo
+                let totalSeconds = 0
+                let lastBetweenTodOnlyIndex = -1
+                
+                // Find all number_time children and the between_tod_only child
+                for (let i = 0; i < tp.children.length; i++) {
+                    if (tp.children[i].type === 'number_time') {
+                        totalSeconds += RuleParser.__parseValue(tp.children[i])
+                    } else if (tp.children[i].type === 'between_tod_only') {
+                        lastBetweenTodOnlyIndex = i
+                    }
+                }
+                
+                // Get the between_tod_only node
+                const betweenTodOnly = tp.children[lastBetweenTodOnlyIndex]
                 const betweenTod = betweenTodOnly.children[0]
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
                 // Check if there's a dow_range at betweenTod.children[2]
                 if (betweenTod.children.length > 2) {
-                    if(typeof startTod === 'number') startTod = {seconds: startTod, dow: null}
-                    if(typeof endTod === 'number') endTod = {seconds: endTod, dow: null}
                     RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
-                return ["TimePeriodBetween", startTod, endTod]
+                return ["TimePeriodBetweenAgo", totalSeconds, startTod, endTod]
             }
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
