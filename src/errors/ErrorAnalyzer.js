@@ -109,6 +109,42 @@ class ErrorAnalyzer {
       };
     }
 
+    // Check for bad time of day (TOD) format
+    const badTod = this._findBadTimeOfDay(input);
+    if (badTod) {
+      return {
+        code: "BAD_TOD",
+        message: `Invalid time of day: ${badTod.value}`,
+        hint: "Time of day must be in HH:MM format with hours 0-23 and minutes 0-59, e.g. 08:30, 14:00, 23:59.",
+        found: badTod.value,
+        expected: ["HH:MM"]
+      };
+    }
+
+    // Check for bad day of week (DOW)
+    const badDow = this._findBadDayOfWeek(input);
+    if (badDow) {
+      return {
+        code: "BAD_DOW",
+        message: `Invalid day of week: ${badDow}`,
+        hint: "Valid days are: MONDAY/MON, TUESDAY/TUE, WEDNESDAY/WED, THURSDAY/THU, FRIDAY/FRI, SATURDAY/SAT, SUNDAY/SUN.",
+        found: badDow,
+        expected: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+      };
+    }
+
+    // Check for bad number format
+    const badNumber = this._findBadNumber(input);
+    if (badNumber) {
+      return {
+        code: "BAD_NUMBER",
+        message: `Invalid number format: ${badNumber}`,
+        hint: "Numbers must be valid integers or decimals, e.g. 42, 3.14, -5, 1.5e10.",
+        found: badNumber,
+        expected: ["valid number"]
+      };
+    }
+
     // Check for bad function call syntax (more specific than general paren check)
     if (this._hasBadFunctionCall(input)) {
       return {
@@ -451,6 +487,71 @@ class ErrorAnalyzer {
     // Get last 20 characters or the whole string if shorter
     const lastPart = trimmed.substring(Math.max(0, trimmed.length - 20));
     return lastPart;
+  }
+
+  /**
+   * Check for invalid time of day format (e.g., 25:00, 12:60)
+   * @private
+   */
+  static _findBadTimeOfDay(input) {
+    // Look for patterns like HH:MM where hours or minutes are out of range
+    const todPattern = /\b(\d{1,2}):(\d{1,2})\b/g;
+    let match;
+    
+    while ((match = todPattern.exec(input)) !== null) {
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const fullMatch = match[0];
+      
+      // Check if hours or minutes are out of valid range
+      if (hours > 23 || minutes > 59) {
+        return { value: fullMatch, hours, minutes };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check for invalid day of week
+   * @private
+   */
+  static _findBadDayOfWeek(input) {
+    // Look for ON keyword followed by potential day name
+    const onPattern = /\bON\s+([A-Z]+)/i;
+    const match = onPattern.exec(input);
+    
+    if (match) {
+      const dayCandidate = match[1].toUpperCase();
+      const validDays = ['MONDAY', 'MON', 'TUESDAY', 'TUE', 'WEDNESDAY', 'WED', 
+                         'THURSDAY', 'THU', 'THUR', 'FRIDAY', 'FRI', 'SATURDAY', 
+                         'SAT', 'SUNDAY', 'SUN'];
+      
+      if (!validDays.includes(dayCandidate)) {
+        return dayCandidate;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check for invalid number format (e.g., 1.2.3, 123abc)
+   * @private
+   */
+  static _findBadNumber(input) {
+    // Look for malformed numbers - multiple decimal points or numbers followed by letters
+    const badNumberPatterns = [
+      /\b\d+\.\d+\.\d+/,  // Multiple decimal points like 1.2.3
+      /\b\d+[a-zA-Z]+\d*/,  // Numbers with letters mixed in like 123abc
+      /\b\d+\.\d+[a-zA-Z]+/  // Decimals with letters like 1.5abc
+    ];
+    
+    for (const pattern of badNumberPatterns) {
+      const match = pattern.exec(input);
+      if (match) {
+        return match[0];
+      }
+    }
+    return null;
   }
 
   static _escapeRegex(str) {

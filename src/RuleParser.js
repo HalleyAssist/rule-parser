@@ -512,9 +512,70 @@ class RuleParser {
         }
     }
     static toIL(txt){
-        const ast = RuleParser.toAst(txt)
-        if(!ast) throw new Error(`failed to parse ${txt}`)
-        return RuleParser._buildExpressionGroup(ast)
+        try {
+            const ast = RuleParser.toAst(txt)
+            if(!ast) throw new Error(`failed to parse ${txt}`)
+            return RuleParser._buildExpressionGroup(ast)
+        } catch (e) {
+            // If it's already a RuleParseError, just re-throw it
+            if (e.name === 'RuleParseError') {
+                throw e;
+            }
+            
+            // Check if it's a validation error we can map to a specific code
+            if (e.message && e.message.includes('Invalid time of day')) {
+                // Extract the invalid time from the error message
+                const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
+                const badTod = match ? match[1] : 'invalid';
+                const { ParsingError } = require('ebnf');
+                const { RuleParseError } = require('./errors/RuleParseError');
+                
+                // Calculate position (simplified - at end of input)
+                const lines = txt.trim().split('\n');
+                const position = {
+                    line: lines.length,
+                    column: lines[lines.length - 1].length + 1,
+                    offset: txt.trim().length
+                };
+                
+                throw new RuleParseError(
+                    "BAD_TOD",
+                    `Invalid time of day: ${badTod}`,
+                    "Time of day must be in HH:MM format with hours 0-23 and minutes 0-59, e.g. 08:30, 14:00, 23:59.",
+                    position,
+                    badTod,
+                    ["HH:MM"],
+                    txt.trim().substring(Math.max(0, txt.trim().length - 50))
+                );
+            }
+            
+            // Check if it's a day of week error
+            if (e.message && e.message.includes('Invalid day of week')) {
+                const match = e.message.match(/Invalid day of week[,:]?\s*(\w+)/);
+                const badDow = match ? match[1] : 'invalid';
+                const { RuleParseError } = require('./errors/RuleParseError');
+                
+                const lines = txt.trim().split('\n');
+                const position = {
+                    line: lines.length,
+                    column: lines[lines.length - 1].length + 1,
+                    offset: txt.trim().length
+                };
+                
+                throw new RuleParseError(
+                    "BAD_DOW",
+                    `Invalid day of week: ${badDow}`,
+                    "Valid days are: MONDAY/MON, TUESDAY/TUE, WEDNESDAY/WED, THURSDAY/THU, FRIDAY/FRI, SATURDAY/SAT, SUNDAY/SUN.",
+                    position,
+                    badDow,
+                    ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"],
+                    txt.trim().substring(Math.max(0, txt.trim().length - 50))
+                );
+            }
+            
+            // For other errors, re-throw
+            throw e;
+        }
     }
 }
 module.exports = RuleParser

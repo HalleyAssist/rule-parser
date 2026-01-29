@@ -53,6 +53,9 @@ All parsing errors are thrown as `RuleParseError` instances with the following p
 | `BAD_BETWEEN_SYNTAX` | Incomplete BETWEEN | `A() BETWEEN` |
 | `BAD_FUNCTION_CALL` | Malformed function call | `func(arg` |
 | `BAD_ARRAY_SYNTAX` | Malformed array | `A([1, 2` |
+| `BAD_TOD` | Invalid time of day | `A() BETWEEN 25:00 AND 23:00` |
+| `BAD_DOW` | Invalid day of week | `A(BETWEEN 01:00 AND 03:00 ON FUNDAY)` |
+| `BAD_NUMBER` | Invalid number format | `A(1.2.3)` or `A(123abc)` |
 | `UNEXPECTED_TOKEN` | Other syntax errors | `A() B()` |
 
 ## Usage Examples

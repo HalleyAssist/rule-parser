@@ -330,6 +330,125 @@ describe("Parser Error Handling", function() {
 		})
 	})
 
+	describe("BAD_TOD", function() {
+		it("should detect time of day with hours > 23", function() {
+			try {
+				RuleParser.toIL("A() BETWEEN 25:00 AND 23:00")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("25:00")
+				expect(e.hint).to.include("HH:MM")
+				expect(e.hint).to.include("0-23")
+			}
+		})
+
+		it("should detect time of day with minutes > 59", function() {
+			try {
+				RuleParser.toIL("A() BETWEEN 12:60 AND 13:00")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("12:60")
+			}
+		})
+
+		it("should detect time of day with invalid hours and minutes", function() {
+			try {
+				RuleParser.toIL("A() BETWEEN 24:60 AND 13:00")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("24:60")
+			}
+		})
+
+		it("should detect invalid time in function argument", function() {
+			try {
+				RuleParser.toIL("A(BETWEEN 10:00 AND 25:30)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("25:30")
+			}
+		})
+	})
+
+	describe("BAD_DOW", function() {
+		it("should detect invalid day of week name", function() {
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON FUNDAY)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_DOW")
+				expect(e.message).to.include("FUNDAY")
+				expect(e.hint).to.include("MONDAY")
+				expect(e.hint).to.include("FRIDAY")
+			}
+		})
+
+		it("should detect misspelled day abbreviation", function() {
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON MOND)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_DOW")
+				expect(e.message).to.include("MOND")
+			}
+		})
+
+		it("should detect invalid day name in complex expression", function() {
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON WEDNESDAYY)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_DOW")
+			}
+		})
+	})
+
+	describe("BAD_NUMBER", function() {
+		it("should detect number with multiple decimal points", function() {
+			try {
+				RuleParser.toIL("A(1.2.3)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_NUMBER")
+				expect(e.message).to.include("1.2.3")
+				expect(e.hint).to.include("valid")
+			}
+		})
+
+		it("should detect number with letters mixed in", function() {
+			try {
+				RuleParser.toIL("A(123abc)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_NUMBER")
+				expect(e.message).to.include("123abc")
+			}
+		})
+
+		it("should detect decimal with letters", function() {
+			try {
+				RuleParser.toIL("A(1.5xyz)")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_NUMBER")
+				expect(e.message).to.include("5xyz")  // Matches the malformed part
+			}
+		})
+
+		it("should detect malformed number in comparison", function() {
+			try {
+				RuleParser.toIL("temp > 1.2.3")
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				expect(e.code).to.equal("BAD_NUMBER")
+			}
+		})
+	})
+
 	describe("UNEXPECTED_TOKEN", function() {
 		it("should detect multiple expressions without operator", function() {
 			try {
