@@ -30,7 +30,7 @@ END_ARRAY            ::= WS* #x5D WS*  /* ] right square bracket */
 END_OBJECT           ::= WS* #x7D WS*  /* } right curly bracket */
 NAME_SEPARATOR       ::= WS* #x3A WS*  /* : colon */
 VALUE_SEPARATOR      ::= WS* #x2C WS*  /* , comma */
-WS                   ::= [#x20#x09#x0A#x0D]+   /* Space | Tab | \n | \r */
+WS                   ::= [#x20#x09#x0A#x0D]   /* Space | Tab | \n | \r */
 
 operator             ::= GTE | LTE | GT | LT | EQ | NEQ
 eq_operator          ::= EQ | NEQ
@@ -41,8 +41,8 @@ END_ARGUMENT         ::= ")"
 BEGIN_PARENTHESIS    ::= "("
 END_PARENTHESIS      ::= ")"
 
-argument             ::= statement WS* ("," WS*)?
-arguments            ::= argument*
+argument             ::= statement WS*
+arguments            ::= (argument (WS* "," WS* argument)*)?
 fname                ::= [a-zA-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
