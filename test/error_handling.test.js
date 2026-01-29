@@ -32,11 +32,11 @@ describe("Error Handling and Edge Cases", function() {
 
 		it("should reject invalid time of day format with single digit", function() {
 			expect(function() {
-				RuleParser.toIL("A() BETWEEN 1 AND 23:00")
+				RuleParser.toIL("A() BETWEEN 23:00 AND 1")
 			}).to.throw()
 			
 			try {
-				RuleParser.toIL("A() BETWEEN 1 AND 23:00")
+				RuleParser.toIL("A() BETWEEN 23:00 AND 1")
 			} catch(e) {
 				expect(e.code).to.equal("BAD_BETWEEN_SYNTAX")
 			}
