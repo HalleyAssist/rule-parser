@@ -13,6 +13,20 @@ class ErrorAnalyzer {
   static analyzeParseFailure(input) {
     const trimmedInput = input.trim();
     
+    // Check for empty or missing expression first (fast path)
+    if (!trimmedInput) {
+      const position = { line: 1, column: 1, offset: 0 };
+      return new RuleParseError(
+        "MISSING_EXPRESSION",
+        "Empty or missing expression.",
+        "Provide a valid rule expression.",
+        position,
+        "empty input",
+        ["expression"],
+        ""
+      );
+    }
+    
     // Calculate position information
     const lines = trimmedInput.split('\n');
     const line = lines.length;
@@ -43,6 +57,10 @@ class ErrorAnalyzer {
   /**
    * Detect the error pattern in the input
    * @private
+   * @param {string} input - The input to analyze
+   * @param {Object} position - Position information
+   * @param {string} snippet - Code snippet
+   * @returns {Object} Error information
    */
   static _detectErrorPattern(input, position, snippet) {
     // Check for unterminated string first (this affects other checks)
@@ -154,17 +172,6 @@ class ErrorAnalyzer {
       };
     }
 
-    // Check for empty or missing expression
-    if (!input.trim() || input.trim().length === 0) {
-      return {
-        code: "MISSING_EXPRESSION",
-        message: "Empty or missing expression.",
-        hint: "Provide a valid rule expression.",
-        found: "empty input",
-        expected: ["expression"]
-      };
-    }
-
     // Check for multiple expressions without logical operators
     if (this._hasMultipleExpressionsWithoutOperator(input)) {
       return {
@@ -187,16 +194,68 @@ class ErrorAnalyzer {
     };
   }
 
+  /**
+   * Check if string is properly terminated
+   * @private
+   * @param {string} input - Input to check
+   * @returns {boolean} True if string is unterminated
+   */
+  static _hasUnterminatedString(input) {
+    let inString = false;
+    let i = 0;
+    while (i < input.length) {
+      const char = input[i];
+      
+      if (char === '"') {
+        if (!inString) {
+          inString = true;
+        } else {
+          // Check if this quote is escaped by counting preceding backslashes
+          let backslashCount = 0;
+          let j = i - 1;
+          while (j >= 0 && input[j] === '\\') {
+            backslashCount++;
+            j--;
+          }
+          // If even number of backslashes (including 0), the quote is not escaped
+          if (backslashCount % 2 === 0) {
+            inString = false;
+          }
+        }
+      }
+      i++;
+    }
+    return inString;
+  }
+
+  /**
+   * Check parenthesis balance
+   * @private
+   * @param {string} input - Input to check
+   * @returns {number} Balance (positive = unclosed, negative = extra closing)
+   */
   static _checkParenBalance(input) {
     let balance = 0;
     let inString = false;
-    for (let i = 0; i < input.length; i++) {
+    let i = 0;
+    while (i < input.length) {
       const char = input[i];
-      const prevChar = i > 0 ? input[i - 1] : '';
       
-      // Track string context
-      if (char === '"' && prevChar !== '\\') {
-        inString = !inString;
+      if (char === '"') {
+        if (!inString) {
+          inString = true;
+        } else {
+          // Check if this quote is escaped
+          let backslashCount = 0;
+          let j = i - 1;
+          while (j >= 0 && input[j] === '\\') {
+            backslashCount++;
+            j--;
+          }
+          if (backslashCount % 2 === 0) {
+            inString = false;
+          }
+        }
       }
       
       // Only count parentheses outside of strings
@@ -204,19 +263,37 @@ class ErrorAnalyzer {
         if (char === '(') balance++;
         else if (char === ')') balance--;
       }
+      i++;
     }
     return balance;
   }
 
+  /**
+   * Find position of extra closing paren
+   * @private
+   */
   static _findExtraCloseParen(input) {
     let balance = 0;
     let inString = false;
-    for (let i = 0; i < input.length; i++) {
+    let i = 0;
+    while (i < input.length) {
       const char = input[i];
-      const prevChar = i > 0 ? input[i - 1] : '';
       
-      if (char === '"' && prevChar !== '\\') {
-        inString = !inString;
+      if (char === '"') {
+        if (!inString) {
+          inString = true;
+        } else {
+          // Check if this quote is escaped
+          let backslashCount = 0;
+          let j = i - 1;
+          while (j >= 0 && input[j] === '\\') {
+            backslashCount++;
+            j--;
+          }
+          if (backslashCount % 2 === 0) {
+            inString = false;
+          }
+        }
       }
       
       if (!inString) {
@@ -226,40 +303,48 @@ class ErrorAnalyzer {
           if (balance < 0) return i;
         }
       }
+      i++;
     }
     return -1;
   }
 
+  /**
+   * Check bracket balance
+   * @private
+   * @param {string} input - Input to check
+   * @returns {number} Balance (positive = unclosed, negative = extra closing)
+   */
   static _checkBracketBalance(input) {
     let balance = 0;
     let inString = false;
-    for (let i = 0; i < input.length; i++) {
+    let i = 0;
+    while (i < input.length) {
       const char = input[i];
-      const prevChar = i > 0 ? input[i - 1] : '';
       
-      if (char === '"' && prevChar !== '\\') {
-        inString = !inString;
+      if (char === '"') {
+        if (!inString) {
+          inString = true;
+        } else {
+          // Check if this quote is escaped
+          let backslashCount = 0;
+          let j = i - 1;
+          while (j >= 0 && input[j] === '\\') {
+            backslashCount++;
+            j--;
+          }
+          if (backslashCount % 2 === 0) {
+            inString = false;
+          }
+        }
       }
       
       if (!inString) {
         if (char === '[') balance++;
         else if (char === ']') balance--;
       }
+      i++;
     }
     return balance;
-  }
-
-  static _hasUnterminatedString(input) {
-    let inString = false;
-    for (let i = 0; i < input.length; i++) {
-      const char = input[i];
-      const prevChar = i > 0 ? input[i - 1] : '';
-      
-      if (char === '"' && prevChar !== '\\') {
-        inString = !inString;
-      }
-    }
-    return inString;
   }
 
   static _findDanglingLogicalOperator(input) {
@@ -267,8 +352,8 @@ class ErrorAnalyzer {
     const logicalOps = [
       { pattern: /&&\s*$/, op: '&&' },
       { pattern: /\|\|\s*$/, op: '||' },
-      { pattern: /\bAND\s*$/i, op: 'AND' },
-      { pattern: /\bOR\s*$/i, op: 'OR' }
+      { pattern: /\bAND\b\s*$/i, op: 'AND' },
+      { pattern: /\bOR\b\s*$/i, op: 'OR' }
     ];
     
     for (const { pattern, op } of logicalOps) {
@@ -293,12 +378,12 @@ class ErrorAnalyzer {
   }
 
   static _hasBadBetweenSyntax(input) {
-    const upperInput = input.toUpperCase();
     // Check if BETWEEN keyword exists but not followed by proper syntax
     if (/\bBETWEEN\b/i.test(input)) {
-      // Very basic check - if we have BETWEEN but parsing failed, it's likely bad syntax
-      // More sophisticated checks could be added here
-      return !(/\bBETWEEN\s+.+\s+AND\s+.+/i.test(input) || /\bBETWEEN\s+.+-\s*.+/i.test(input));
+      // Check for valid BETWEEN patterns
+      const hasValidBetweenAnd = /\bBETWEEN\s+\S+\s+AND\s+\S+/i.test(input);
+      const hasValidBetweenDash = /\bBETWEEN\s+\S+-\s*\S+/i.test(input);
+      return !hasValidBetweenAnd && !hasValidBetweenDash;
     }
     return false;
   }
@@ -352,12 +437,11 @@ class ErrorAnalyzer {
 
   static _hasMultipleExpressionsWithoutOperator(input) {
     // Detect patterns like "A() B()" without && or || between them
-    // This is a simplified check
-    const funcPattern = /\)\s+[a-zA-Z]/;
-    if (funcPattern.test(input)) {
-      // Check if there's no logical operator between
-      const betweenPattern = /\)\s+(?!&&|\|\||AND|OR|BETWEEN|and|or|between)[a-zA-Z]/i;
-      return betweenPattern.test(input);
+    // Check if there's no logical operator between function calls
+    const betweenPattern = /\)\s+(?!&&|\|\||AND|OR|BETWEEN)/i;
+    if (betweenPattern.test(input)) {
+      // Make sure the next thing after ) is an identifier (suggesting another expression)
+      return /\)\s+[a-zA-Z]/.test(input);
     }
     return false;
   }

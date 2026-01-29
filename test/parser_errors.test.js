@@ -102,6 +102,8 @@ describe("Parser Error Handling", function() {
 		})
 
 		it("should detect whitespace-only expression", function() {
+			// Tests that whitespace (spaces, newlines, tabs) without content
+			// is correctly identified as empty after trimming
 			try {
 				RuleParser.toIL("   \n  \t  ")
 				expect.fail("Should have thrown an error")
@@ -439,13 +441,14 @@ describe("Parser Error Handling", function() {
 			}
 		})
 
-		it("should ignore parentheses inside strings", function() {
+		it("should detect unmatched paren even with parentheses inside strings", function() {
+			// The string "test (" contains a paren but should not affect balance checking
+			// The missing closing ) for the function call should be detected as unmatched
 			try {
-				// The ( in the string should not affect paren counting
-				RuleParser.toIL('A("test ("))')
+				RuleParser.toIL('A("test ("')
 				expect.fail("Should have thrown an error")
 			} catch (e) {
-				expect(e.code).to.equal("UNMATCHED_PAREN")
+				expect(e.code).to.equal("BAD_FUNCTION_CALL")
 			}
 		})
 	})

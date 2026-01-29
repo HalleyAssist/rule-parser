@@ -2,6 +2,13 @@
  * Represents a parsing error with position information
  */
 class ParsingError extends Error {
+  /**
+   * Create a ParsingError
+   * @param {string} message - Error message
+   * @param {Object} position - Position information with line, column, and offset
+   * @param {Array<string>} expected - Array of expected tokens
+   * @param {string} found - What was found instead
+   */
   constructor(message, position, expected, found) {
     super(message);
     this.name = 'ParsingError';

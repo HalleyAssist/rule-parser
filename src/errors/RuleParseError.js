@@ -2,6 +2,16 @@
  * Represents a user-friendly rule parsing error with error codes
  */
 class RuleParseError extends Error {
+  /**
+   * Create a RuleParseError
+   * @param {string} code - Error code for programmatic handling
+   * @param {string} message - Human-readable error message
+   * @param {string} hint - Helpful suggestion for fixing the error
+   * @param {Object} position - Position information with line, column, and offset
+   * @param {string} found - What was found at error position
+   * @param {Array<string>} expected - What was expected
+   * @param {string} snippet - Code snippet showing error location
+   */
   constructor(code, message, hint, position, found, expected, snippet) {
     super(message);
     this.name = 'RuleParseError';
