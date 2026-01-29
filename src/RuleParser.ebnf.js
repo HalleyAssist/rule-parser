@@ -30,7 +30,7 @@ END_ARRAY            ::= WS* #x5D WS*  /* ] right square bracket */
 END_OBJECT           ::= WS* #x7D WS*  /* } right curly bracket */
 NAME_SEPARATOR       ::= WS* #x3A WS*  /* : colon */
 VALUE_SEPARATOR      ::= WS* #x2C WS*  /* , comma */
-WS                   ::= [#x20#x09#x0A#x0D]+   /* Space | Tab | \n | \r */
+WS                   ::= [#x20#x09#x0A#x0D]   /* Space | Tab | \n | \r */
 
 operator             ::= GTE | LTE | GT | LT | EQ | NEQ
 eq_operator          ::= EQ | NEQ
