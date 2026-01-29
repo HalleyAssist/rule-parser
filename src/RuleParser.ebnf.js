@@ -41,8 +41,8 @@ END_ARGUMENT         ::= ")"
 BEGIN_PARENTHESIS    ::= "("
 END_PARENTHESIS      ::= ")"
 
-argument             ::= statement WS* ("," WS*)?
-arguments            ::= argument*
+argument             ::= statement WS*
+arguments            ::= (argument (WS* "," WS* argument)*)?
 fname                ::= [a-zA-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
