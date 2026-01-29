@@ -7,31 +7,66 @@ describe("Error Handling and Edge Cases", function() {
 		it("should reject invalid time of day with hours >= 24", function() {
 			expect(function() {
 				RuleParser.toIL("A() BETWEEN 25:00 AND 23:00")
-			}).to.throw(/Invalid time of day/)
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A() BETWEEN 25:00 AND 23:00")
+			} catch(e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("25:00")
+			}
 		})
 
 		it("should reject invalid time of day with minutes >= 60", function() {
 			expect(function() {
 				RuleParser.toIL("A() BETWEEN 12:60 AND 13:00")
-			}).to.throw(/Invalid time of day/)
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A() BETWEEN 12:60 AND 13:00")
+			} catch(e) {
+				expect(e.code).to.equal("BAD_TOD")
+				expect(e.message).to.include("12:60")
+			}
 		})
 
 		it("should reject invalid time of day format with single digit", function() {
 			expect(function() {
 				RuleParser.toIL("A() BETWEEN 1 AND 23:00")
 			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A() BETWEEN 1 AND 23:00")
+			} catch(e) {
+				// This throws UNEXPECTED_TOKEN because "1" is parsed as a number, not a TOD
+				expect(e.code).to.be.oneOf(["UNEXPECTED_TOKEN", "BAD_BETWEEN_SYNTAX"])
+			}
 		})
 
 		it("should reject negative hours", function() {
 			expect(function() {
 				RuleParser.toIL("A() BETWEEN -1:00 AND 23:00")
-			}).to.throw()  // Parser fails before reaching validation
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A() BETWEEN -1:00 AND 23:00")
+			} catch(e) {
+				// Parser fails before reaching validation
+				expect(e.code).to.be.a('string')
+			}
 		})
 
 		it("should reject negative minutes", function() {
 			expect(function() {
 				RuleParser.toIL("A() BETWEEN 12:-30 AND 13:00")
-			}).to.throw()  // Parser fails before reaching validation
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A() BETWEEN 12:-30 AND 13:00")
+			} catch(e) {
+				// Parser fails before reaching validation
+				expect(e.code).to.be.a('string')
+			}
 		})
 	})
 
@@ -39,13 +74,27 @@ describe("Error Handling and Edge Cases", function() {
 		it("should reject invalid day of week name", function() {
 			expect(function() {
 				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON FUNDAY)")
-			}).to.throw()  // Parser fails before reaching validation
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON FUNDAY)")
+			} catch(e) {
+				expect(e.code).to.equal("BAD_DOW")
+				expect(e.message).to.include("FUNDAY")
+			}
 		})
 
 		it("should reject misspelled day abbreviation", function() {
 			expect(function() {
 				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON MOND)")
-			}).to.throw()  // Parser fails before reaching validation
+			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON MOND)")
+			} catch(e) {
+				expect(e.code).to.equal("BAD_DOW")
+				expect(e.message).to.include("MOND")
+			}
 		})
 
 		it("should accept THUR as alternative to THU", function() {
@@ -54,6 +103,13 @@ describe("Error Handling and Edge Cases", function() {
 			expect(function() {
 				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON THUR)")
 			}).to.throw()
+			
+			try {
+				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON THUR)")
+			} catch(e) {
+				// THUR doesn't work in practice, so it fails at parser level
+				expect(e.code).to.be.oneOf(["BAD_DOW", "UNEXPECTED_TOKEN"])
+			}
 		})
 
 		it("should normalize THU to THURSDAY", function() {
@@ -74,6 +130,12 @@ describe("Error Handling and Edge Cases", function() {
 			expect(function() {
 				RuleParser.toIL("")
 			}).to.throw()
+			
+			try {
+				RuleParser.toIL("")
+			} catch(e) {
+				expect(e.code).to.equal("MISSING_EXPRESSION")
+			}
 		})
 	})
 
