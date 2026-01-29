@@ -6,11 +6,12 @@ const { RuleParseError } = require('./RuleParseError');
  */
 class ErrorAnalyzer {
   /**
-   * Analyze a failed parse and return a user-friendly RuleParseError
+   * Analyze a ParsingError and return a user-friendly RuleParseError
    * @param {string} input - The input string that failed to parse
+   * @param {ParsingError} parsingError - The ParsingError from the parser (optional)
    * @returns {RuleParseError} - A user-friendly error with error code
    */
-  static analyzeParseFailure(input) {
+  static analyzeParseFailure(input, parsingError = null) {
     const trimmedInput = input.trim();
     
     // Check for empty or missing expression first (fast path)
@@ -27,7 +28,12 @@ class ErrorAnalyzer {
       );
     }
     
-    // Calculate position information
+    // If we have a ParsingError, use its information
+    if (parsingError && parsingError instanceof ParsingError) {
+      return this._analyzeFromParsingError(input, parsingError);
+    }
+    
+    // Fallback to string-based analysis (for validation errors)
     const lines = trimmedInput.split('\n');
     const line = lines.length;
     const lastLine = lines[lines.length - 1] || '';
@@ -55,7 +61,230 @@ class ErrorAnalyzer {
   }
 
   /**
-   * Detect the error pattern in the input
+   * Analyze error using ParsingError exception data
+   * @private
+   */
+  static _analyzeFromParsingError(input, err) {
+    const position = err.position;
+    const expected = err.expected || [];
+    const found = err.found || '';
+    const failureTree = err.failureTree || [];
+    
+    // Get snippet around error position
+    const snippetStart = Math.max(0, position.offset - 20);
+    const snippetEnd = Math.min(input.length, position.offset + 30);
+    const snippet = (snippetStart > 0 ? '...' : '') + 
+                    input.substring(snippetStart, snippetEnd) +
+                    (snippetEnd < input.length ? '...' : '');
+    
+    // Analyze what was expected to determine error type using failureTree
+    const errorInfo = this._detectErrorFromFailureTree(input, position, expected, found, failureTree);
+    
+    return new RuleParseError(
+      errorInfo.code,
+      errorInfo.message,
+      errorInfo.hint,
+      position,
+      found,
+      expected,
+      snippet
+    );
+  }
+
+  /**
+   * Detect error type from failureTree
+   * @private
+   */
+  static _detectErrorFromFailureTree(input, position, expected, found, failureTree) {
+    const beforeError = input.substring(0, position.offset);
+    
+    // Helper to check if a name exists in the failure tree
+    const hasFailure = (name) => {
+      const search = (nodes) => {
+        if (!Array.isArray(nodes)) return false;
+        for (const node of nodes) {
+          if (node.name === name) return true;
+          if (node.children && search(node.children)) return true;
+        }
+        return false;
+      };
+      return search(failureTree);
+    };
+    
+    // Helper to check if a name exists at top level only
+    const hasTopLevelFailure = (name) => {
+      if (!Array.isArray(failureTree)) return false;
+      return failureTree.some(node => node.name === name);
+    };
+    
+    // Check for bad number format first
+    const badNum = this._findBadNumber(input);
+    if (badNum) {
+      return {
+        code: "BAD_NUMBER",
+        message: `Invalid number format: ${badNum}`,
+        hint: "Numbers must be valid integers or decimals, e.g. 42, 3.14, -5, 1.5e10.",
+      };
+    }
+    
+    // Check for unterminated string - if the top level failure is 'string', check if it's unterminated
+    if (hasTopLevelFailure('string') && found === "end of input") {
+      if (this._hasUnterminatedString(input)) {
+        return {
+          code: "UNTERMINATED_STRING",
+          message: "Unterminated string literal.",
+          hint: "String literals must be enclosed in double quotes, e.g. \"hello world\".",
+        };
+      }
+    }
+    
+    // Check if parser was expecting END_ARGUMENT (closing paren for function)
+    if (hasFailure('END_ARGUMENT')) {
+      return {
+        code: "BAD_FUNCTION_CALL",
+        message: "Invalid function call syntax.",
+        hint: "Function calls must have matching parentheses, e.g. func() or func(arg1, arg2).",
+      };
+    }
+    
+    // Check if parser was expecting END_ARRAY (closing bracket)
+    if (hasFailure('END_ARRAY')) {
+      return {
+        code: "BAD_ARRAY_SYNTAX",
+        message: "Invalid array syntax.",
+        hint: "Arrays must be enclosed in brackets with comma-separated values, e.g. [1, 2, 3].",
+      };
+    }
+    
+    // Check for dangling logical operator (expecting expression/statement at end of input)
+    if ((hasFailure('expression') || hasFailure('statement')) && found === "end of input") {
+      // Check if there's a logical operator before the error
+      const trimmed = input.trim();
+      if (/&&\s*$/.test(trimmed)) {
+        return {
+          code: "DANGLING_LOGICAL_OPERATOR",
+          message: "Logical operator '&&' at end of expression.",
+          hint: "Logical operators (&&, ||, AND, OR) must be followed by an expression.",
+        };
+      }
+      if (/\|\|\s*$/.test(trimmed)) {
+        return {
+          code: "DANGLING_LOGICAL_OPERATOR",
+          message: "Logical operator '||' at end of expression.",
+          hint: "Logical operators (&&, ||, AND, OR) must be followed by an expression.",
+        };
+      }
+      if (/\bAND\b\s*$/i.test(trimmed)) {
+        return {
+          code: "DANGLING_LOGICAL_OPERATOR",
+          message: "Logical operator 'AND' at end of expression.",
+          hint: "Logical operators (&&, ||, AND, OR) must be followed by an expression.",
+        };
+      }
+      if (/\bOR\b\s*$/i.test(trimmed)) {
+        return {
+          code: "DANGLING_LOGICAL_OPERATOR",
+          message: "Logical operator 'OR' at end of expression.",
+          hint: "Logical operators (&&, ||, AND, OR) must be followed by an expression.",
+        };
+      }
+    }
+    
+    // Check for BETWEEN - if we see BETWEEN in input and found end of input with WS failure
+    if (/\bBETWEEN\b/i.test(input) && found === "end of input") {
+      return {
+        code: "BAD_BETWEEN_SYNTAX",
+        message: "Invalid BETWEEN syntax.",
+        hint: "BETWEEN requires two values: 'expr BETWEEN value1 AND value2' or 'expr BETWEEN value1-value2'.",
+      };
+    }
+    
+    // Check if parser expected BEGIN_ARGUMENT at top level and found is not alphabetic
+    // This means parser thought something was a function but it's actually a comparison
+    if (hasTopLevelFailure('BEGIN_ARGUMENT')) {
+      const trimmed = beforeError.trim();
+      // If found is a comparison operator, this is likely missing RHS
+      if (found.match(/^[><=!]/)) {
+        return {
+          code: "MISSING_RHS_AFTER_OPERATOR",
+          message: `Expected a value after '${found}'.`,
+          hint: "Comparison operators must be followed by a value, e.g. temp > 25, name == \"bob\".",
+        };
+      }
+      
+      // Also check if beforeError ends with comparison operator
+      const compOps = ['>=', '<=', '==', '!=', '>', '<', '=', '==~', '!=~'];
+      for (const op of compOps) {
+        if (trimmed.endsWith(op)) {
+          return {
+            code: "MISSING_RHS_AFTER_OPERATOR",
+            message: `Expected a value after '${op}'.`,
+            hint: "Comparison operators must be followed by a value, e.g. temp > 25, name == \"bob\".",
+          };
+        }
+      }
+    }
+    
+    // Check for value/result expected (could be missing RHS)
+    if ((hasFailure('value') || hasFailure('result') || hasFailure('simple_result')) && found === "end of input") {
+      // Check for comparison operator
+      const trimmed = beforeError.trim();
+      const compOps = ['>=', '<=', '==', '!=', '>', '<', '=', '==~', '!=~'];
+      
+      for (const op of compOps) {
+        if (trimmed.endsWith(op)) {
+          return {
+            code: "MISSING_RHS_AFTER_OPERATOR",
+            message: `Expected a value after '${op}'.`,
+            hint: "Comparison operators must be followed by a value, e.g. temp > 25, name == \"bob\".",
+          };
+        }
+      }
+    }
+    
+    // General unmatched parentheses check
+    const parenBalance = this._checkParenBalance(input);
+    if (parenBalance > 0 && found === "end of input") {
+      return {
+        code: "UNMATCHED_PAREN",
+        message: "Unclosed parenthesis detected.",
+        hint: "Every opening '(' must have a matching closing ')'. Check your expression for missing closing parentheses.",
+      };
+    } else if (parenBalance < 0) {
+      return {
+        code: "UNMATCHED_PAREN",
+        message: "Extra closing parenthesis detected.",
+        hint: "Every closing ')' must have a matching opening '('. Remove the extra closing parenthesis.",
+      };
+    }
+    
+    // General unmatched brackets check
+    const bracketBalance = this._checkBracketBalance(input);
+    if (bracketBalance > 0 && found === "end of input") {
+      return {
+        code: "UNMATCHED_BRACKET",
+        message: "Unclosed bracket detected.",
+        hint: "Every opening '[' must have a matching closing ']'. Check your array syntax.",
+      };
+    } else if (bracketBalance < 0) {
+      return {
+        code: "UNMATCHED_BRACKET",
+        message: "Extra closing bracket detected.",
+        hint: "Every closing ']' must have a matching opening '['. Remove the extra closing bracket.",
+      };
+    }
+    
+    // Default to unexpected token
+    const foundDesc = found === "end of input" ? "end of input" : `'${found}'`;
+    return {
+      code: "UNEXPECTED_TOKEN",
+      message: `Unexpected ${foundDesc} at position ${position.offset}.`,
+      hint: "Check your syntax. Common issues include missing operators, invalid characters, or malformed expressions.",
+    };
+  }
+
+  /**
+   * Detect the error pattern in the input (fallback for non-ParsingError cases)
    * @private
    * @param {string} input - The input to analyze
    * @param {Object} position - Position information

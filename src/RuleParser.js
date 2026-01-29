@@ -76,7 +76,7 @@ class RuleParser {
         } catch (e) {
             // If ebnf throws ParsingError, convert it to RuleParseError with helpful error code
             if (e instanceof ParsingError) {
-                throw ErrorAnalyzer.analyzeParseFailure(txt);
+                throw ErrorAnalyzer.analyzeParseFailure(txt, e);
             }
             throw e;
         }
