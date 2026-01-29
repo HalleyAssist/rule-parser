@@ -1,4 +1,4 @@
-const { ParsingError } = require('./ParsingError');
+const { ParsingError } = require('ebnf');
 const { RuleParseError } = require('./RuleParseError');
 
 /**

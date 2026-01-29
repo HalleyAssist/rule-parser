@@ -1,4 +1,5 @@
 const {Parser} = require('ebnf/dist/Parser.js'),
+      {ParsingError} = require('ebnf'),
       assert = require('assert')
 
 let ParserRules = require('./RuleParser.ebnf.js')
@@ -70,13 +71,21 @@ class RuleParser {
             ParserCache = new Parser(ParserRules, {debug: false})
         }
 
-        ret = ParserCache.getAST(txt.trim(), 'statement_main');
+        try {
+            ret = ParserCache.getAST(txt.trim(), 'statement_main');
+        } catch (e) {
+            // If ebnf throws ParsingError, convert it to RuleParseError with helpful error code
+            if (e instanceof ParsingError) {
+                throw ErrorAnalyzer.analyzeParseFailure(txt);
+            }
+            throw e;
+        }
         
         if(ret){
             return ret.children[0]
         }
         
-        // If parsing failed, throw a user-friendly error
+        // If parsing failed without throwing (shouldn't happen with new ebnf), throw error
         throw ErrorAnalyzer.analyzeParseFailure(txt);
     }
     static _parseArgument(argument){
@@ -509,5 +518,5 @@ class RuleParser {
     }
 }
 module.exports = RuleParser
-module.exports.ParsingError = require('./errors/ParsingError').ParsingError
+module.exports.ParsingError = require('ebnf').ParsingError
 module.exports.RuleParseError = require('./errors/RuleParseError').RuleParseError

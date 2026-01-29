@@ -4,6 +4,24 @@ The rule parser now provides comprehensive error handling with user-friendly err
 
 ## Error Classes
 
+### ParsingError
+
+The `ParsingError` class is provided by the [node-ebnf](https://github.com/HalleyAssist/node-ebnf) library and contains low-level parsing failure information:
+
+```javascript
+{
+  position: {
+    line: number,     // Line number where error occurred
+    column: number,   // Column number where error occurred  
+    offset: number    // Character offset from start
+  },
+  expected: string[], // Array of expected tokens
+  found: string       // What was found instead
+}
+```
+
+Note: The parser catches `ParsingError` internally and converts it to a more user-friendly `RuleParseError`.
+
 ### RuleParseError
 
 All parsing errors are thrown as `RuleParseError` instances with the following properties:
