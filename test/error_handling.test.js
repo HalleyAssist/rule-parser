@@ -38,8 +38,7 @@ describe("Error Handling and Edge Cases", function() {
 			try {
 				RuleParser.toIL("A() BETWEEN 1 AND 23:00")
 			} catch(e) {
-				// This throws UNEXPECTED_TOKEN because "1" is parsed as a number, not a TOD
-				expect(e.code).to.be.oneOf(["UNEXPECTED_TOKEN", "BAD_BETWEEN_SYNTAX"])
+				expect(e.code).to.equal("BAD_BETWEEN_SYNTAX")
 			}
 		})
 
@@ -51,8 +50,7 @@ describe("Error Handling and Edge Cases", function() {
 			try {
 				RuleParser.toIL("A() BETWEEN -1:00 AND 23:00")
 			} catch(e) {
-				// Parser fails before reaching validation
-				expect(e.code).to.be.a('string')
+				expect(e.code).to.equal("BAD_TOD")
 			}
 		})
 
@@ -64,8 +62,7 @@ describe("Error Handling and Edge Cases", function() {
 			try {
 				RuleParser.toIL("A() BETWEEN 12:-30 AND 13:00")
 			} catch(e) {
-				// Parser fails before reaching validation
-				expect(e.code).to.be.a('string')
+				expect(e.code).to.equal("BAD_TOD")
 			}
 		})
 	})
@@ -108,7 +105,7 @@ describe("Error Handling and Edge Cases", function() {
 				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON THUR)")
 			} catch(e) {
 				// THUR doesn't work in practice, so it fails at parser level
-				expect(e.code).to.be.oneOf(["BAD_DOW", "UNEXPECTED_TOKEN"])
+				expect(e.code).to.equal("BAD_DOW")
 			}
 		})
 
