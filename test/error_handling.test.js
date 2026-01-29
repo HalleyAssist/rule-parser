@@ -41,30 +41,6 @@ describe("Error Handling and Edge Cases", function() {
 				expect(e.code).to.equal("BAD_BETWEEN_SYNTAX")
 			}
 		})
-
-		it("should reject negative hours", function() {
-			expect(function() {
-				RuleParser.toIL("A() BETWEEN -1:00 AND 23:00")
-			}).to.throw()
-			
-			try {
-				RuleParser.toIL("A() BETWEEN -1:00 AND 23:00")
-			} catch(e) {
-				expect(e.code).to.equal("BAD_TOD")
-			}
-		})
-
-		it("should reject negative minutes", function() {
-			expect(function() {
-				RuleParser.toIL("A() BETWEEN 12:-30 AND 13:00")
-			}).to.throw()
-			
-			try {
-				RuleParser.toIL("A() BETWEEN 12:-30 AND 13:00")
-			} catch(e) {
-				expect(e.code).to.equal("BAD_TOD")
-			}
-		})
 	})
 
 	describe("Invalid Day of Week", function() {

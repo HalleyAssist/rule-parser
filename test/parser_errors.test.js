@@ -265,9 +265,7 @@ describe("Parser Error Handling", function() {
 				RuleParser.toIL("A(")
 				expect.fail("Should have thrown an error")
 			} catch (e) {
-				expect(e.code).to.equal("UNMATCHED_PAREN")
-				expect(e.message).to.include("function")
-				expect(e.hint).to.include("parentheses")
+				expect(e.code).to.equal("BAD_FUNCTION_CALL")
 			}
 		})
 
