@@ -117,7 +117,17 @@ class ErrorAnalyzer {
       return failureTree.some(node => node.name === name);
     };
     
-    // Check for bad number format first
+    // PRIORITY 1: Check for unterminated string FIRST (before any balance checks)
+    // This must be checked early because unclosed strings can confuse other detections
+    if (this._hasUnterminatedString(input)) {
+      return {
+        code: "UNTERMINATED_STRING",
+        message: "Unterminated string literal.",
+        hint: "String literals must be enclosed in double quotes, e.g. \"hello world\".",
+      };
+    }
+    
+    // PRIORITY 2: Check for bad number format
     const badNum = this._findBadNumber(input);
     if (badNum) {
       return {
@@ -127,18 +137,40 @@ class ErrorAnalyzer {
       };
     }
     
-    // Check for unterminated string - if the top level failure is 'string', check if it's unterminated
-    if (hasTopLevelFailure('string') && found === "end of input") {
-      if (this._hasUnterminatedString(input)) {
-        return {
-          code: "UNTERMINATED_STRING",
-          message: "Unterminated string literal.",
-          hint: "String literals must be enclosed in double quotes, e.g. \"hello world\".",
-        };
-      }
+    // PRIORITY 3: Check for token-level issues (extra characters after valid tokens)
+    // This must be checked before END_ARGUMENT/END_ARRAY to catch cases like WEDNESDAYY
+    const tokenError = this._detectExtraCharactersAfterToken(input, position, beforeError, found);
+    if (tokenError) {
+      return tokenError;
+    }
+    
+    // PRIORITY 4: Check for specific parser contexts (function calls, arrays)
+    // But first check if we have bracket/paren imbalance that's more specific
+    
+    // Check bracket balance first for extra brackets
+    const bracketBalance = this._checkBracketBalance(input);
+    if (bracketBalance < 0) {
+      // Extra closing bracket - this is more specific than function call context
+      return {
+        code: "UNMATCHED_BRACKET",
+        message: "Extra closing bracket detected.",
+        hint: "Every closing ']' must have a matching opening '['. Remove the extra closing bracket.",
+      };
+    }
+    
+    // Check paren balance for certain cases
+    const parenBalance = this._checkParenBalance(input);
+    if (parenBalance < 0) {
+      // Extra closing paren - this is more specific than function call context
+      return {
+        code: "UNMATCHED_PAREN",
+        message: "Extra closing parenthesis detected.",
+        hint: "Every closing ')' must have a matching opening '('. Remove the extra closing parenthesis.",
+      };
     }
     
     // Check if parser was expecting END_ARGUMENT (closing paren for function)
+    // This indicates we're inside a function call context
     if (hasFailure('END_ARGUMENT')) {
       return {
         code: "BAD_FUNCTION_CALL",
@@ -148,6 +180,7 @@ class ErrorAnalyzer {
     }
     
     // Check if parser was expecting END_ARRAY (closing bracket)
+    // This indicates we're inside an array context
     if (hasFailure('END_ARRAY')) {
       return {
         code: "BAD_ARRAY_SYNTAX",
@@ -156,9 +189,10 @@ class ErrorAnalyzer {
       };
     }
     
-    // Check for dangling logical operator (expecting expression/statement at end of input)
-    if ((hasFailure('expression') || hasFailure('statement')) && found === "end of input") {
-      // Check if there's a logical operator before the error
+    // PRIORITY 5: Check for dangling operators
+    
+    // Check for dangling logical operator (check input pattern directly)
+    if (found === "end of input") {
       const trimmed = input.trim();
       if (/&&\s*$/.test(trimmed)) {
         return {
@@ -190,17 +224,19 @@ class ErrorAnalyzer {
       }
     }
     
-    // Check for BETWEEN - if we see BETWEEN in input and found end of input with WS failure
-    if (/\bBETWEEN\b/i.test(input) && found === "end of input") {
-      return {
-        code: "BAD_BETWEEN_SYNTAX",
-        message: "Invalid BETWEEN syntax.",
-        hint: "BETWEEN requires two values: 'expr BETWEEN value1 AND value2' or 'expr BETWEEN value1-value2'.",
-      };
+    // Check for BETWEEN - if we see BETWEEN in input with incomplete syntax
+    if (/\bBETWEEN\b/i.test(input)) {
+      // Check if BETWEEN is incomplete or missing AND
+      if (found === "end of input" || /\bBETWEEN\s+\d+\s*$/i.test(beforeError.trim())) {
+        return {
+          code: "BAD_BETWEEN_SYNTAX",
+          message: "Invalid BETWEEN syntax.",
+          hint: "BETWEEN requires two values: 'expr BETWEEN value1 AND value2' or 'expr BETWEEN value1-value2'.",
+        };
+      }
     }
     
-    // Check if parser expected BEGIN_ARGUMENT at top level and found is not alphabetic
-    // This means parser thought something was a function but it's actually a comparison
+    // Check if parser expected BEGIN_ARGUMENT - could be missing RHS after operator
     if (hasTopLevelFailure('BEGIN_ARGUMENT')) {
       const trimmed = beforeError.trim();
       // If found is a comparison operator, this is likely missing RHS
@@ -242,35 +278,36 @@ class ErrorAnalyzer {
       }
     }
     
-    // General unmatched parentheses check
-    const parenBalance = this._checkParenBalance(input);
+    // PRIORITY 6: Final fallback - general balance checks for unclosed parens/brackets
+    // (Note: extra closing parens/brackets were already checked in PRIORITY 4)
+    
+    // Check for unclosed parentheses (only if not already handled)
     if (parenBalance > 0 && found === "end of input") {
+      // Check if this looks like a function call context
+      const looksLikeFunction = /[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*$/.test(input);
+      const message = looksLikeFunction 
+        ? "Unclosed parenthesis in function call."
+        : "Unclosed parenthesis detected.";
+      
       return {
         code: "UNMATCHED_PAREN",
-        message: "Unclosed parenthesis detected.",
+        message: message,
         hint: "Every opening '(' must have a matching closing ')'. Check your expression for missing closing parentheses.",
-      };
-    } else if (parenBalance < 0) {
-      return {
-        code: "UNMATCHED_PAREN",
-        message: "Extra closing parenthesis detected.",
-        hint: "Every closing ')' must have a matching opening '('. Remove the extra closing parenthesis.",
       };
     }
     
-    // General unmatched brackets check
-    const bracketBalance = this._checkBracketBalance(input);
+    // Check for unclosed brackets (only if not already handled)
     if (bracketBalance > 0 && found === "end of input") {
+      // Check if this looks like an array context
+      const looksLikeArray = /\[[^\]]*$/.test(input);
+      const message = looksLikeArray
+        ? "Unclosed bracket in array."
+        : "Unclosed bracket detected.";
+      
       return {
         code: "UNMATCHED_BRACKET",
-        message: "Unclosed bracket detected.",
+        message: message,
         hint: "Every opening '[' must have a matching closing ']'. Check your array syntax.",
-      };
-    } else if (bracketBalance < 0) {
-      return {
-        code: "UNMATCHED_BRACKET",
-        message: "Extra closing bracket detected.",
-        hint: "Every closing ']' must have a matching opening '['. Remove the extra closing bracket.",
       };
     }
     
@@ -281,6 +318,102 @@ class ErrorAnalyzer {
       message: `Unexpected ${foundDesc} at position ${position.offset}.`,
       hint: "Check your syntax. Common issues include missing operators, invalid characters, or malformed expressions.",
     };
+  }
+  
+  /**
+   * Detect extra characters after a valid token (e.g., WEDNESDAYY has extra Y after WEDNESDAY)
+   * @private
+   */
+  static _detectExtraCharactersAfterToken(input, position, beforeError, found) {
+    // First, check for invalid day of week patterns
+    // Pattern: "ON" followed by partial day name
+    const onMatch = /\bON\s+(\w+)$/i.exec(beforeError);
+    if (onMatch) {
+      const partial = onMatch[1].toUpperCase();
+      // Check if this looks like a partial day name or invalid day
+      // Note: THUR is not included because it's not actually supported by the parser
+      const validDays = ['MONDAY', 'MON', 'TUESDAY', 'TUE', 'WEDNESDAY', 'WED', 
+                        'THURSDAY', 'THU', 'FRIDAY', 'FRI', 'SATURDAY', 
+                        'SAT', 'SUNDAY', 'SUN'];
+      
+      if (!validDays.includes(partial)) {
+        // This might be part of an invalid day name
+        // Combine with found to get the full attempted day name if found is alphabetic
+        const fullAttempt = partial + (found && found !== "end of input" && found.match(/^[A-Z]/i) ? found : "");
+        
+        // Check if it looks like a misspelled day
+        const possibleMisspelling = validDays.some(day => {
+          // Check for similarity (starts with same letter, length close)
+          return day.startsWith(partial.charAt(0)) && 
+                 Math.abs(day.length - fullAttempt.length) <= 3;
+        });
+        
+        if (possibleMisspelling || fullAttempt.length >= 3) {
+          return {
+            code: "BAD_DOW",
+            message: `Invalid day of week: ${fullAttempt}`,
+            hint: "Valid days are: MONDAY/MON, TUESDAY/TUE, WEDNESDAY/WED, THURSDAY/THU, FRIDAY/FRI, SATURDAY/SAT, SUNDAY/SUN.",
+          };
+        }
+      }
+    }
+    
+    // Check for time of day patterns right before error
+    const todMatch = /(\d{1,2}):(-?\d{1,2})?$/.exec(beforeError);
+    if (todMatch || (beforeError.match(/\d+:$/) && found && found.match(/^-?\d+/))) {
+      // Looks like we're in a time of day context
+      // Extract the full time attempt
+      let fullTime = todMatch ? todMatch[0] : '';
+      if (!todMatch && beforeError.match(/\d+:$/)) {
+        // We have a number: before and digits after
+        const num = beforeError.match(/\d+:$/)[0];
+        const minutes = found.match(/^-?\d+/)[0];
+        fullTime = num + minutes;
+      }
+      
+      // Check if it's a bad time
+      const timePattern = /(\d{1,2}):(-?\d{1,2})/;
+      const timeMatch = timePattern.exec(fullTime);
+      if (timeMatch) {
+        const hours = parseInt(timeMatch[1], 10);
+        const minutes = parseInt(timeMatch[2], 10);
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+          return {
+            code: "BAD_TOD",
+            message: `Invalid time of day: ${timeMatch[0]}`,
+            hint: "Time of day must be in HH:MM format with hours 0-23 and minutes 0-59, e.g. 08:30, 14:00, 23:59.",
+          };
+        }
+      }
+    }
+    
+    // List of known valid tokens (keywords, days of week, etc.)
+    const validTokens = [
+      // Days of week
+      'MONDAY', 'MON', 'TUESDAY', 'TUE', 'WEDNESDAY', 'WED', 
+      'THURSDAY', 'THU', 'THUR', 'FRIDAY', 'FRI', 'SATURDAY', 
+      'SAT', 'SUNDAY', 'SUN',
+      // Keywords
+      'BETWEEN', 'AND', 'OR', 'NOT', 'IN', 'ON'
+    ];
+    
+    // Check if any valid token appears right before the error position
+    for (const token of validTokens) {
+      if (beforeError.toUpperCase().endsWith(token)) {
+        // Found a valid token right before error - check if we have extra characters
+        if (found && found.length > 0 && found !== "end of input" && found.match(/^[A-Z]/i)) {
+          // We have alphabetic characters after a valid token
+          const extraChars = found.charAt(0);
+          return {
+            code: "UNEXPECTED_TOKEN",
+            message: `Unexpected characters after '${token}'. Remove the extra '${extraChars}'.`,
+            hint: `'${token}' is a valid keyword. Remove any extra characters that follow it.`,
+          };
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**
@@ -723,8 +856,8 @@ class ErrorAnalyzer {
    * @private
    */
   static _findBadTimeOfDay(input) {
-    // Look for patterns like HH:MM where hours or minutes are out of range
-    const todPattern = /\b(\d{1,2}):(\d{1,2})\b/g;
+    // Look for patterns like HH:MM where hours or minutes are out of range or negative
+    const todPattern = /\b(-?\d{1,2}):(-?\d{1,2})\b/g;
     let match;
     
     while ((match = todPattern.exec(input)) !== null) {
@@ -732,8 +865,8 @@ class ErrorAnalyzer {
       const minutes = parseInt(match[2], 10);
       const fullMatch = match[0];
       
-      // Check if hours or minutes are out of valid range
-      if (hours > 23 || minutes > 59) {
+      // Check if hours or minutes are out of valid range or negative
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
         return { value: fullMatch, hours, minutes };
       }
     }

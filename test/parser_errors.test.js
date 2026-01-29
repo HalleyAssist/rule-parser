@@ -402,7 +402,9 @@ describe("Parser Error Handling", function() {
 				RuleParser.toIL("A(BETWEEN 01:00 AND 03:00 ON WEDNESDAYY)")
 				expect.fail("Should have thrown an error")
 			} catch (e) {
-				expect(e.code).to.equal("BAD_DOW")
+				expect(e.code).to.equal("UNEXPECTED_TOKEN")
+				expect(e.message).to.include("WEDNESDAY")
+				expect(e.message).to.include("Y")
 			}
 		})
 	})
