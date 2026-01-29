@@ -4,6 +4,8 @@ const {Parser} = require('ebnf/dist/Parser.js'),
 let ParserRules = require('./RuleParser.ebnf.js')
 let ParserCache;
 
+const { ErrorAnalyzer } = require('./errors/ErrorAnalyzer');
+
 const ArithmeticOperators = {
     "+": 'MathAdd',
     "-": 'MathSub',
@@ -73,6 +75,9 @@ class RuleParser {
         if(ret){
             return ret.children[0]
         }
+        
+        // If parsing failed, throw a user-friendly error
+        throw ErrorAnalyzer.analyzeParseFailure(txt);
     }
     static _parseArgument(argument){
         assert(argument.type === 'argument')
@@ -504,3 +509,5 @@ class RuleParser {
     }
 }
 module.exports = RuleParser
+module.exports.ParsingError = require('./errors/ParsingError').ParsingError
+module.exports.RuleParseError = require('./errors/RuleParseError').RuleParseError
