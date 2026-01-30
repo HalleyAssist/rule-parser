@@ -42,9 +42,8 @@ BEGIN_PARENTHESIS    ::= "("
 END_PARENTHESIS      ::= ")"
 
 BEGIN_IN             ||= "IN"
-END_IN               ::= ")"
 
-in_expr              ::= BEGIN_IN WS* BEGIN_PARENTHESIS WS* arguments END_IN
+in_expr              ::= BEGIN_IN WS* BEGIN_PARENTHESIS WS* arguments END_PARENTHESIS
 
 argument             ::= statement WS*
 arguments            ::= argument (WS* "," WS* argument)*
