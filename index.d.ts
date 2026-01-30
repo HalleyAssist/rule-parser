@@ -142,6 +142,8 @@ export type ILExpression =
 
 /**
  * Function call expression
+ * Note: The first element is the function name (not an operator like 'Gt', 'And', etc.)
+ * Functions can have zero or more arguments
  */
 export type FunctionCall = [string, ...ILExpression[]];
 
@@ -162,8 +164,9 @@ export type LogicalOp = 'And' | 'Or';
 
 /**
  * Logical expression
+ * Note: Logical operators require at least two operands
  */
-export type LogicalExpression = [LogicalOp, ...ILExpression[]];
+export type LogicalExpression = [LogicalOp, ILExpression, ILExpression, ...ILExpression[]];
 
 /**
  * Arithmetic operators

@@ -1,6 +1,6 @@
-// TypeScript type checking test
-// This file tests that the type definitions are correct and complete
-// Run with: tsc --noEmit test/types.test.ts
+// TypeScript type checking exercise file
+// This file demonstrates how to use the type definitions
+// It is not a runtime test - it's checked with: tsc --noEmit test/types.test.ts
 
 import RuleParser, { RuleParseError, ParsingError, ILExpression } from '../index';
 
