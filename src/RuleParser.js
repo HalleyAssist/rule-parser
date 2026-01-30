@@ -322,7 +322,12 @@ class RuleParser {
         throw new Error(`Unknown arithmetic operand type ${type}`)
     }
     static _isConstantValue(expr){
-        // Check if an expression is a constant value
+        // Check if an expression is a constant value (not just numbers, but any literal)
+        return Array.isArray(expr) && expr.length === 2 && expr[0] === 'Value'
+    }
+    
+    static _isConstantNumberValue(expr){
+        // Check if an expression is a constant numeric value
         return Array.isArray(expr) && expr.length === 2 && expr[0] === 'Value' && typeof expr[1] === 'number'
     }
     
@@ -351,7 +356,7 @@ class RuleParser {
         const partB = RuleParser.__parseArithmeticResult(result, 2)
 
         // Compile out constant expressions
-        if (RuleParser._isConstantValue(partA) && RuleParser._isConstantValue(partB)) {
+        if (RuleParser._isConstantNumberValue(partA) && RuleParser._isConstantNumberValue(partB)) {
             const result = RuleParser._evaluateConstantArithmetic(operatorFn, partA[1], partB[1])
             if (result !== null) {
                 return ['Value', result]
@@ -446,12 +451,30 @@ class RuleParser {
                     }
                     case 'in_expr': {
                         // in_expr has children[0] = arguments node
+                        // ArrayIn now takes 2 parameters:
+                        // Parameter 1: haystack array (the array to be searched)
+                        // Parameter 2: the needle (the value to search for)
                         const args = rhs.children[0]
-                        const ret = ['ArrayIn', RuleParser._parseResult(expr.children[0])]
+                        const haystack = []
                         for(const a of args.children){
-                            ret.push(RuleParser._parseArgument(a))
+                            haystack.push(RuleParser._parseArgument(a))
                         }
-                        return ret
+                        const needle = RuleParser._parseResult(expr.children[0])
+                        
+                        // Check if all haystack values are constants
+                        const allConstants = haystack.every(item => RuleParser._isConstantValue(item))
+                        
+                        let haystackExpr
+                        if (allConstants) {
+                            // All constants: use ["Value", [array of constants]]
+                            const constantArray = haystack.map(item => item[1])
+                            haystackExpr = ['Value', constantArray]
+                        } else {
+                            // Has non-constants: use ["Array", arg1, arg2, ...]
+                            haystackExpr = ['Array', ...haystack]
+                        }
+                        
+                        return ['ArrayIn', haystackExpr, needle]
                     }
 
                     default:
