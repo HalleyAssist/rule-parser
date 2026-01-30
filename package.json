@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "description": "The grammar for HalleyAssist rules",
   "main": "index.js",
+  "browser": {
+    "node:assert": "assert"
+  },
   "types": "index.d.ts",
   "scripts": {
     "test": "mocha",
-    "build": "node ./bin/package.js"
+    "build": "gulp build"
   },
   "repository": {
     "type": "git",
@@ -23,9 +26,15 @@
   },
   "devDependencies": {
     "@types/node": "^25.1.0",
+    "aliasify": "^2.1.0",
+    "browserify": "^17.0.1",
     "chai": "^4",
+    "deassertify": "^0.2.0",
+    "gulp": "^5.0.1",
     "mocha": "^10.8.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
   },
   "publishConfig": {
     "access": "public",
@@ -34,6 +43,7 @@
   "files": [
     "src/*",
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "dist/*"
   ]
 }
