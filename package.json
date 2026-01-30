@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "The grammar for HalleyAssist rules",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "mocha",
     "build": "node ./bin/package.js"
@@ -21,8 +22,10 @@
     "ebnf": "git+https://github.com/HalleyAssist/node-ebnf.git"
   },
   "devDependencies": {
+    "@types/node": "^25.1.0",
     "chai": "^4",
-    "mocha": "^10.8.2"
+    "mocha": "^10.8.2",
+    "typescript": "^5.9.3"
   },
   "publishConfig": {
     "access": "public",
@@ -30,6 +33,7 @@
   },
   "files": [
     "src/*",
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ]
 }
