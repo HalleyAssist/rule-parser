@@ -59,7 +59,7 @@ gulp.task('build-browser', function() {
         entries: path.resolve(__dirname, 'src/RuleParser.browser.js'),
         standalone: 'RuleParser'
     })
-    .transform('deassertify')
+    .transform('unassertify')
     .bundle()
     .pipe(source('rule-parser.browser.js'))
     .pipe(buffer())
