@@ -26,7 +26,6 @@
   },
   "devDependencies": {
     "@types/node": "^25.1.0",
-    "aliasify": "^2.1.0",
     "browserify": "^17.0.1",
     "chai": "^4",
     "deassertify": "^0.2.0",
