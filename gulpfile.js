@@ -47,7 +47,14 @@ gulp.task('build-production', function(done) {
 });
 
 // Task to build browser version with browserify and deassertify
+// Note: This task requires production files to exist. Run 'gulp build' or 'gulp build-production' first.
 gulp.task('build-browser', function() {
+    // Check if production files exist
+    if (!fs.existsSync('./src/RuleParser.production.js')) {
+        console.error('Error: Production files not found. Run "gulp build-production" first.');
+        return Promise.reject(new Error('Production files not found'));
+    }
+    
     return browserify({
         entries: path.resolve(__dirname, 'src/RuleParser.browser.js'),
         standalone: 'RuleParser'
