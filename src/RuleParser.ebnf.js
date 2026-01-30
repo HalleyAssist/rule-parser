@@ -7,7 +7,7 @@ statement            ::= expression (logical_operator expression)*
 expression           ::= not_expression | standard_expression | parenthesis_expression
 parenthesis_expression::= BEGIN_PARENTHESIS WS* statement WS* END_PARENTHESIS
 not_expression       ||= NOT (result | parenthesis_expression)
-standard_expression  ||= result ((WS* eq_approx) | (WS* basic_rhs) | ((WS+ IS)? WS+ between) | in_expr)?
+standard_expression  ||= result ((WS* eq_approx) | (WS* basic_rhs) | ((WS+ IS)? WS+ between) | (WS+ in_expr))?
 basic_rhs            ::= operator WS*  result
 eq_approx            ::= eq_operator WS* "~" WS* result
 
@@ -41,10 +41,9 @@ END_ARGUMENT         ::= ")"
 BEGIN_PARENTHESIS    ::= "("
 END_PARENTHESIS      ::= ")"
 
-BEGIN_IN             ||= "IN("
-END_IN               ::= ")"
+BEGIN_IN             ||= "IN"
 
-in_expr              ::= BEGIN_IN WS* arguments END_IN
+in_expr              ::= BEGIN_IN WS* BEGIN_PARENTHESIS WS* arguments END_PARENTHESIS
 
 argument             ::= statement WS*
 arguments            ::= argument (WS* "," WS* argument)*

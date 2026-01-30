@@ -444,6 +444,15 @@ class RuleParser {
                         }
                         return ret
                     }
+                    case 'in_expr': {
+                        // in_expr has children[0] = arguments node
+                        const args = rhs.children[0]
+                        const ret = ['ArrayIn', RuleParser._parseResult(expr.children[0])]
+                        for(const a of args.children){
+                            ret.push(RuleParser._parseArgument(a))
+                        }
+                        return ret
+                    }
 
                     default:
                         throw new Error(`unable to parse std expression, unknown rhs type ${rhs.type}`)
