@@ -35,8 +35,6 @@ gulp.task('build-production', function(done) {
         const ruleParserJs = fs.readFileSync('src/RuleParser.js', 'utf8');
         const ruleParserJsFixed = ruleParserJs
             .replace("require('./RuleParser.ebnf.js')", 'require(\'./RuleParser.production.ebnf.js\')')
-            // Replace node:assert with assert for browser compatibility
-            .replace(/require\(['"]node:assert['"]\)/g, "require('assert')");
 
         fs.writeFileSync('src/RuleParser.production.js', ruleParserJsFixed);
         
