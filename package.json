@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "description": "The grammar for HalleyAssist rules",
   "main": "index.js",
-  "browser": {
-    "node:assert": "assert"
-  },
+  "browser": "./dist/rule-parser.browser.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "mocha",

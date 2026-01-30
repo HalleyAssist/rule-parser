@@ -33,7 +33,10 @@ gulp.task('build-production', function(done) {
         fs.writeFileSync('src/RuleParser.production.ebnf.js', "module.exports="+rules);
 
         const ruleParserJs = fs.readFileSync('src/RuleParser.js', 'utf8');
-        const ruleParserJsFixed = ruleParserJs.replace("require('./RuleParser.ebnf.js')", 'require(\'./RuleParser.production.ebnf.js\')');
+        const ruleParserJsFixed = ruleParserJs
+            .replace("require('./RuleParser.ebnf.js')", 'require(\'./RuleParser.production.ebnf.js\')')
+            // Replace node:assert with assert for browser compatibility
+            .replace(/require\(['"]node:assert['"]\)/g, "require('assert')");
 
         fs.writeFileSync('src/RuleParser.production.js', ruleParserJsFixed);
         
@@ -48,7 +51,7 @@ gulp.task('build-production', function(done) {
 // Task to build browser version with browserify and deassertify
 gulp.task('build-browser', function() {
     return browserify({
-        entries: path.resolve(__dirname, 'index.js'),
+        entries: path.resolve(__dirname, 'src/RuleParser.browser.js'),
         standalone: 'RuleParser'
     })
     .transform('deassertify')
