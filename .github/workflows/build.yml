@@ -49,7 +49,7 @@ jobs:
     - name: Test (Development)
       run: npm test
     - name: Build
-      run: node bin/package.js
+      run: npm run build
     - name: Test (Production)
       run: npm test
     - run: |
