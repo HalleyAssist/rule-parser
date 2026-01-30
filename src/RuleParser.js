@@ -1,6 +1,6 @@
 const {Parser} = require('ebnf/dist/Parser.js'),
       {ParsingError} = require('ebnf'),
-      assert = require('assert')
+      assert = require('node:assert')
 
 let ParserRules = require('./RuleParser.ebnf.js')
 let ParserCache;
