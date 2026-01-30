@@ -22,6 +22,7 @@
     "ebnf": "git+https://github.com/HalleyAssist/node-ebnf.git"
   },
   "devDependencies": {
+    "@types/node": "^25.1.0",
     "chai": "^4",
     "mocha": "^10.8.2",
     "typescript": "^5.9.3"
