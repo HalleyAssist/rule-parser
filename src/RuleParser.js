@@ -446,12 +446,16 @@ class RuleParser {
                     }
                     case 'in_expr': {
                         // in_expr has children[0] = arguments node
+                        // ArrayIn now takes 2 parameters:
+                        // Parameter 1: haystack array (the array to be searched)
+                        // Parameter 2: the needle (the value to search for)
                         const args = rhs.children[0]
-                        const ret = ['ArrayIn', RuleParser._parseResult(expr.children[0])]
+                        const haystack = []
                         for(const a of args.children){
-                            ret.push(RuleParser._parseArgument(a))
+                            haystack.push(RuleParser._parseArgument(a))
                         }
-                        return ret
+                        const needle = RuleParser._parseResult(expr.children[0])
+                        return ['ArrayIn', haystack, needle]
                     }
 
                     default:
