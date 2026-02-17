@@ -178,14 +178,14 @@ class RuleParser {
                 }
                 
                 const betweenTod = betweenTodOnly.children[0]
-                // between_tod has: children[0] = first tod_inner, children[1] = separator, children[2] = second tod_inner, children[3] = optional dow_range
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
-                let endTod = RuleParser.__parseValue(betweenTod.children[2])
+                let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
-                // Check if there's a dow_range at betweenTod.children[3]
+                // Check if there's a dow_range at betweenTod.children[2]
                 // Note: startTod and endTod should always be objects from number_tod parsing
-                if (betweenTod.children.length > 3) {
-                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[3])
+                if (betweenTod.children.length > 2) {
+                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
                 return ["TimePeriodBetweenAgo", totalSeconds, startTod, endTod]
@@ -193,15 +193,15 @@ class RuleParser {
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
                 const betweenTod = tp.children[0]
-                // between_tod has: children[0] = first tod_inner, children[1] = separator, children[2] = second tod_inner, children[3] = optional dow_range
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
-                let endTod = RuleParser.__parseValue(betweenTod.children[2])
+                let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
-                // Check if there's a dow_range at betweenTod.children[3]
-                if (betweenTod.children.length > 3) {
+                // Check if there's a dow_range at betweenTod.children[2]
+                if (betweenTod.children.length > 2) {
                     if(typeof startTod === 'number') startTod = {seconds: startTod, dow: null}
                     if(typeof endTod === 'number') endTod = {seconds: endTod, dow: null}
-                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[3])
+                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
                 }
                 
                 return ["TimePeriodBetween", startTod, endTod]
@@ -452,13 +452,13 @@ class RuleParser {
                 switch(rhs.type){
                     case 'between_tod': {
                         // Direct between_tod (without wrapping between node)
-                        // between_tod has: children[0] = first tod_inner, children[1] = separator, children[2] = second tod_inner, children[3] = optional dow_range
+                        // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                         const startTod = RuleParser.__parseValue(rhs.children[0])
-                        const endTod = RuleParser.__parseValue(rhs.children[2])
+                        const endTod = RuleParser.__parseValue(rhs.children[1])
                         
-                        // Check if there's a dow_range (children[3])
-                        if (rhs.children.length > 3) {
-                            RuleParser._addDowToTods(startTod, endTod, rhs.children[3])
+                        // Check if there's a dow_range (children[2])
+                        if (rhs.children.length > 2) {
+                            RuleParser._addDowToTods(startTod, endTod, rhs.children[2])
                         }
                         
                         return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
@@ -467,13 +467,13 @@ class RuleParser {
                         // between wraps either between_number or between_tod
                         const betweenChild = rhs.children[0]
                         if (betweenChild.type === 'between_tod') {
-                            // between_tod has: children[0] = first tod_inner, children[1] = separator, children[2] = second tod_inner, children[3] = optional dow_range
+                            // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                             const startTod = RuleParser.__parseValue(betweenChild.children[0])
-                            const endTod = RuleParser.__parseValue(betweenChild.children[2])
+                            const endTod = RuleParser.__parseValue(betweenChild.children[1])
                             
-                            // Check if there's a dow_range (children[3])
-                            if (betweenChild.children.length > 3) {
-                                RuleParser._addDowToTods(startTod, endTod, betweenChild.children[3])
+                            // Check if there's a dow_range (children[2])
+                            if (betweenChild.children.length > 2) {
+                                RuleParser._addDowToTods(startTod, endTod, betweenChild.children[2])
                             }
                             
                             return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
