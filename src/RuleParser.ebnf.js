@@ -24,7 +24,7 @@ number_time_atom     ::= number_time
 tod_atom             ::= number_tod
 dow_atom             ::= dow
 
-arithmetic_operand   ::= fcall | number_time_atom | number_atom
+arithmetic_operand   ::= fcall | number_atom | number_time_atom
 arithmetic_result    ::= arithmetic_operand WS* arithmetic_operator WS* (arithmetic_result | arithmetic_operand)
 
 simple_result        ::= fcall | value
@@ -59,7 +59,7 @@ fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
 between_dash_or_and  ::= (WS+ "AND" WS+) | (WS* "-" WS*)
 
-between_number_inner ::= number_time_atom | number_atom
+between_number_inner ::= number_atom | number_time_atom
 between_number       ||= between_number_inner between_dash_or_and between_number_inner
 
 between_number_time_inner ::= number_time_atom
