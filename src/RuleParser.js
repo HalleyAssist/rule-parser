@@ -108,10 +108,14 @@ class RuleParser {
         // dow_range can have 1 or 2 children (single day or range)
         if (dowRange.children.length === 1) {
             // Single day: ON MONDAY - return just the day string
-            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[0].text) };
+            // New structure: dow_range -> dow_range_inner -> dow_atom -> dow
+            const dayText = RuleParser.__parseValue(dowRange.children[0])
+            return { start: dayText, end: dayText };
         } else if (dowRange.children.length === 2) {
             // Range: ON MONDAY TO FRIDAY - return both start and end days
-            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[1].text) };
+            const startDay = RuleParser.__parseValue(dowRange.children[0])
+            const endDay = RuleParser.__parseValue(dowRange.children[1])
+            return { start: startDay, end: endDay };
         } else {
             throw new Error(`Invalid dow_range with ${dowRange.children.length} children`);
         }
@@ -133,12 +137,14 @@ class RuleParser {
                     let totalSeconds = 0
                     const components = []
                     for (const child of timePeriodAgo.children) {
-                        if (child.type === 'number_time') {
-                            const number = parseFloat(child.children[0].text)
-                            const unit = child.children[1].text.toUpperCase()
+                        if (child.type === 'number_time_atom') {
+                            // New structure: number_time_atom -> number_time -> number, unit
+                            const numberTime = child.children[0]
+                            const number = parseFloat(numberTime.children[0].text)
+                            const unit = numberTime.children[1].text.toUpperCase()
                             components.push([number, unit])
                             // Parse the value to get seconds
-                            totalSeconds += RuleParser.__parseValue(child)
+                            totalSeconds += RuleParser.__parseValue(numberTime)
                         }
                     }
                     // If there's only one component, use its number and unit
@@ -151,15 +157,16 @@ class RuleParser {
                 }
                 return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
-                // time_period_ago_between has: number_time (WS+ number_time)* WS+ AGO WS+ between_tod_only
+                // time_period_ago_between has: number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ between_tod_only
                 // We need to extract all number_time children and sum them up, then return TimePeriodBetweenAgo
                 let totalSeconds = 0
                 let betweenTodOnly = null
                 
-                // Find all number_time children and the between_tod_only child
+                // Find all number_time_atom children and the between_tod_only child
                 for (let i = 0; i < tp.children.length; i++) {
-                    if (tp.children[i].type === 'number_time') {
-                        totalSeconds += RuleParser.__parseValue(tp.children[i])
+                    if (tp.children[i].type === 'number_time_atom') {
+                        // New structure: number_time_atom -> number_time
+                        totalSeconds += RuleParser.__parseValue(tp.children[i].children[0])
                     } else if (tp.children[i].type === 'between_tod_only') {
                         betweenTodOnly = tp.children[i]
                     }
@@ -223,6 +230,24 @@ class RuleParser {
     static __parseValue(child){
         const type = child.type
         switch(type){
+            case 'value': {
+                // Arrays have value nodes as children - unwrap to get value_atom
+                return RuleParser.__parseValue(child.children[0])
+            }
+            case 'value_atom': {
+                // New layer: unwrap value_atom to get the actual atomic type
+                return RuleParser.__parseValue(child.children[0])
+            }
+            case 'number_atom':
+            case 'number_time_atom':
+            case 'tod_atom':
+            case 'between_tod_inner':
+            case 'between_number_inner':
+            case 'between_number_time_inner':
+            case 'dow_range_inner': {
+                // New layer: unwrap atom wrappers to get the actual leaf nodes
+                return RuleParser.__parseValue(child.children[0])
+            }
             case 'string': {
                 const str = child.text
                 return str.slice(1, -1)
@@ -274,9 +299,12 @@ class RuleParser {
             case 'array': {
                 const ret = []
                 for(const c of child.children){
-                    ret.push(RuleParser.__parseValue(c.children[0]))
+                    ret.push(RuleParser.__parseValue(c))
                 }
                 return ret;
+            }
+            case 'dow': {
+                return normalizeDow(child.text)
             }
             default:
                 throw new Error(`Unknown value type ${type}`)
@@ -287,7 +315,17 @@ class RuleParser {
         
         const type = child.type
         switch(type){
+            case 'value_atom': {
+                // New layer: unwrap value_atom to get the actual atomic type
+                const atomChild = child.children[0]
+                if (atomChild.type === 'time_period') {
+                    const tp = atomChild.children[0]
+                    return RuleParser._parseTimePeriod(tp)
+                }
+                return ['Value', RuleParser.__parseValue(atomChild)]
+            }
             case 'time_period': {
+                // Old structure (shouldn't happen with new EBNF)
                 const tp = child.children[0]
                 return RuleParser._parseTimePeriod(tp)
             }
@@ -314,6 +352,11 @@ class RuleParser {
         switch(type){
             case 'fcall':
                 return RuleParser._parseFcall(child)
+            case 'number_atom':
+            case 'number_time_atom': {
+                // New layer: unwrap atom wrappers to get the actual leaf nodes
+                return ['Value', RuleParser.__parseValue(child.children[0])]
+            }
             case 'number':
                 return ['Value', parseFloat(child.text)]
             case 'number_time':
