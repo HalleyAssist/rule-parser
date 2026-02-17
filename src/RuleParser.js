@@ -244,6 +244,7 @@ class RuleParser {
             case 'number_atom':
             case 'number_time_atom':
             case 'tod_atom':
+            case 'dow_atom':
             case 'between_tod_inner':
             case 'between_number_inner':
             case 'between_number_time_inner':
@@ -606,6 +607,7 @@ class RuleParser {
                 // Extract the invalid time from the error message
                 const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
                 const badTod = match ? match[1] : 'invalid';
+                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 // Calculate position (simplified - at end of input)
                 const lines = txt.trim().split('\n');
