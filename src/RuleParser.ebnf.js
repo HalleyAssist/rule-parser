@@ -57,9 +57,9 @@ arguments            ::= argument (WS* "," WS* argument)*
 fname                ::= [A-Za-z0-9]+
 fcall                ::= fname WS* BEGIN_ARGUMENT WS* arguments? END_ARGUMENT
 
-between_dash_or_and  ::= (WS+ "AND" WS+) | (WS* "-" WS*)
+between_dash_or_and  ||= (WS+ "AND" WS+) | (WS* "-" WS*)
 
-between_number_inner ::= number_time_atom | number_atom
+between_number_inner ::= number_atom | number_time_atom
 between_number       ||= between_number_inner between_dash_or_and between_number_inner
 
 between_number_time_inner ::= number_time_atom

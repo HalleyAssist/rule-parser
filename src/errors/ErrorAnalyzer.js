@@ -1,5 +1,5 @@
 const { ParsingError } = require('ebnf');
-const { RuleParseError } = require('./RuleParseError');
+const RuleParseError = require('./RuleParseError');
 
 /**
  * Analyzes parsing errors and maps them to user-friendly error codes

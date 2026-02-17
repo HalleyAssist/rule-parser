@@ -1,6 +1,7 @@
 const {Parser} = require('ebnf/dist/Parser.js'),
       {ParsingError} = require('ebnf'),
-      assert = require('assert')
+      assert = require('assert'),
+      RuleParseError = require('./errors/RuleParseError')
 
 let ParserRules = require('./RuleParser.ebnf.js')
 let ParserCache;
@@ -108,10 +109,14 @@ class RuleParser {
         // dow_range can have 1 or 2 children (single day or range)
         if (dowRange.children.length === 1) {
             // Single day: ON MONDAY - return just the day string
-            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[0].text) };
+            // New structure: dow_range -> dow_range_inner -> dow_atom -> dow
+            const dayText = RuleParser.__parseValue(dowRange.children[0])
+            return { start: dayText, end: dayText };
         } else if (dowRange.children.length === 2) {
             // Range: ON MONDAY TO FRIDAY - return both start and end days
-            return { start: normalizeDow(dowRange.children[0].text), end: normalizeDow(dowRange.children[1].text) };
+            const startDay = RuleParser.__parseValue(dowRange.children[0])
+            const endDay = RuleParser.__parseValue(dowRange.children[1])
+            return { start: startDay, end: endDay };
         } else {
             throw new Error(`Invalid dow_range with ${dowRange.children.length} children`);
         }
@@ -133,12 +138,14 @@ class RuleParser {
                     let totalSeconds = 0
                     const components = []
                     for (const child of timePeriodAgo.children) {
-                        if (child.type === 'number_time') {
-                            const number = parseFloat(child.children[0].text)
-                            const unit = child.children[1].text.toUpperCase()
+                        if (child.type === 'number_time_atom') {
+                            // New structure: number_time_atom -> number_time -> number, unit
+                            const numberTime = child.children[0]
+                            const number = parseFloat(numberTime.children[0].text)
+                            const unit = numberTime.children[1].text.toUpperCase()
                             components.push([number, unit])
                             // Parse the value to get seconds
-                            totalSeconds += RuleParser.__parseValue(child)
+                            totalSeconds += RuleParser.__parseValue(numberTime)
                         }
                     }
                     // If there's only one component, use its number and unit
@@ -151,15 +158,16 @@ class RuleParser {
                 }
                 return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
-                // time_period_ago_between has: number_time (WS+ number_time)* WS+ AGO WS+ between_tod_only
+                // time_period_ago_between has: number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ between_tod_only
                 // We need to extract all number_time children and sum them up, then return TimePeriodBetweenAgo
                 let totalSeconds = 0
                 let betweenTodOnly = null
                 
-                // Find all number_time children and the between_tod_only child
+                // Find all number_time_atom children and the between_tod_only child
                 for (let i = 0; i < tp.children.length; i++) {
-                    if (tp.children[i].type === 'number_time') {
-                        totalSeconds += RuleParser.__parseValue(tp.children[i])
+                    if (tp.children[i].type === 'number_time_atom') {
+                        // New structure: number_time_atom -> number_time
+                        totalSeconds += RuleParser.__parseValue(tp.children[i].children[0])
                     } else if (tp.children[i].type === 'between_tod_only') {
                         betweenTodOnly = tp.children[i]
                     }
@@ -171,6 +179,7 @@ class RuleParser {
                 }
                 
                 const betweenTod = betweenTodOnly.children[0]
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
@@ -185,6 +194,7 @@ class RuleParser {
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
                 const betweenTod = tp.children[0]
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
@@ -200,13 +210,14 @@ class RuleParser {
             case 'between_time_only': {
                 // between_time_only has children[0] = between_number_time node
                 const betweenNumberTime = tp.children[0]
+                // between_number_time has: children[0] = first time_inner, children[1] = separator, children[2] = second time_inner, children[3] = optional dow_range
                 const startValue = RuleParser.__parseValue(betweenNumberTime.children[0])
-                const endValue = RuleParser.__parseValue(betweenNumberTime.children[1])
+                const endValue = RuleParser.__parseValue(betweenNumberTime.children[2])
                 
-                // Check if there's a dow_range at betweenNumberTime.children[2]
+                // Check if there's a dow_range at betweenNumberTime.children[3]
                 // If DOW filters are provided, append them as additional parameters
-                if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
-                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
+                if (betweenNumberTime.children.length > 3 && betweenNumberTime.children[3].type === 'dow_range') {
+                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[3])
                     if (dow.start === dow.end) {
                         // Single day: ["TimePeriodBetween", start, end, "MONDAY"]
                         return ["TimePeriodBetween", startValue, endValue, dow.start]
@@ -223,6 +234,25 @@ class RuleParser {
     static __parseValue(child){
         const type = child.type
         switch(type){
+            case 'value': {
+                // Arrays have value nodes as children - unwrap to get value_atom
+                return RuleParser.__parseValue(child.children[0])
+            }
+            case 'value_atom': {
+                // New layer: unwrap value_atom to get the actual atomic type
+                return RuleParser.__parseValue(child.children[0])
+            }
+            case 'number_atom':
+            case 'number_time_atom':
+            case 'tod_atom':
+            case 'dow_atom':
+            case 'between_tod_inner':
+            case 'between_number_inner':
+            case 'between_number_time_inner':
+            case 'dow_range_inner': {
+                // New layer: unwrap atom wrappers to get the actual leaf nodes
+                return RuleParser.__parseValue(child.children[0])
+            }
             case 'string': {
                 const str = child.text
                 return str.slice(1, -1)
@@ -274,9 +304,12 @@ class RuleParser {
             case 'array': {
                 const ret = []
                 for(const c of child.children){
-                    ret.push(RuleParser.__parseValue(c.children[0]))
+                    ret.push(RuleParser.__parseValue(c))
                 }
                 return ret;
+            }
+            case 'dow': {
+                return normalizeDow(child.text)
             }
             default:
                 throw new Error(`Unknown value type ${type}`)
@@ -287,7 +320,17 @@ class RuleParser {
         
         const type = child.type
         switch(type){
+            case 'value_atom': {
+                // New layer: unwrap value_atom to get the actual atomic type
+                const atomChild = child.children[0]
+                if (atomChild.type === 'time_period') {
+                    const tp = atomChild.children[0]
+                    return RuleParser._parseTimePeriod(tp)
+                }
+                return ['Value', RuleParser.__parseValue(atomChild)]
+            }
             case 'time_period': {
+                // Old structure (shouldn't happen with new EBNF)
                 const tp = child.children[0]
                 return RuleParser._parseTimePeriod(tp)
             }
@@ -314,6 +357,11 @@ class RuleParser {
         switch(type){
             case 'fcall':
                 return RuleParser._parseFcall(child)
+            case 'number_atom':
+            case 'number_time_atom': {
+                // New layer: unwrap atom wrappers to get the actual leaf nodes
+                return ['Value', RuleParser.__parseValue(child.children[0])]
+            }
             case 'number':
                 return ['Value', parseFloat(child.text)]
             case 'number_time':
@@ -406,7 +454,7 @@ class RuleParser {
                 switch(rhs.type){
                     case 'between_tod': {
                         // Direct between_tod (without wrapping between node)
-                        // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                        // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                         const startTod = RuleParser.__parseValue(rhs.children[0])
                         const endTod = RuleParser.__parseValue(rhs.children[1])
                         
@@ -421,7 +469,7 @@ class RuleParser {
                         // between wraps either between_number or between_tod
                         const betweenChild = rhs.children[0]
                         if (betweenChild.type === 'between_tod') {
-                            // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                            // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                             const startTod = RuleParser.__parseValue(betweenChild.children[0])
                             const endTod = RuleParser.__parseValue(betweenChild.children[1])
                             
@@ -432,12 +480,13 @@ class RuleParser {
                             
                             return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
                         } else {
-                            // between_number - no dow support
-                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(betweenChild.children[0])], ['Value', RuleParser.__parseValue(betweenChild.children[1])]]
+                            // between_number has: children[0] = first number_inner, children[1] = separator, children[2] = second number_inner
+                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(betweenChild.children[0])], ['Value', RuleParser.__parseValue(betweenChild.children[2])]]
                         }
                     }
                     case 'between_number':
-                        return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(rhs.children[0].children[0])], ['Value', RuleParser.__parseValue(rhs.children[0].children[1])]]
+                        // between_number has: children[0] = first number_inner, children[1] = separator, children[2] = second number_inner
+                        return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(rhs.children[0].children[0])], ['Value', RuleParser.__parseValue(rhs.children[0].children[2])]]
                     case 'basic_rhs':
                         return [OperatorFn[rhs.children[0].text], RuleParser._parseResult(expr.children[0]), RuleParser._parseResult(rhs.children[1])]
                     case 'eq_approx': {
@@ -559,8 +608,6 @@ class RuleParser {
                 // Extract the invalid time from the error message
                 const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
                 const badTod = match ? match[1] : 'invalid';
-                const { ParsingError } = require('ebnf');
-                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 // Calculate position (simplified - at end of input)
                 const lines = txt.trim().split('\n');
@@ -585,7 +632,6 @@ class RuleParser {
             if (e.message && e.message.includes('Invalid day of week')) {
                 const match = e.message.match(/Invalid day of week[,:]?\s*(\w+)/);
                 const badDow = match ? match[1] : 'invalid';
-                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 const lines = txt.trim().split('\n');
                 const position = {
@@ -611,5 +657,6 @@ class RuleParser {
     }
 }
 module.exports = RuleParser
-module.exports.ParsingError = require('ebnf').ParsingError
-module.exports.RuleParseError = require('./errors/RuleParseError').RuleParseError
+module.exports.ParserRules = ParserRules
+module.exports.ParsingError = ParsingError
+module.exports.RuleParseError = RuleParseError
