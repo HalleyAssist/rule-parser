@@ -559,8 +559,6 @@ class RuleParser {
                 // Extract the invalid time from the error message
                 const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
                 const badTod = match ? match[1] : 'invalid';
-                const { ParsingError } = require('ebnf');
-                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 // Calculate position (simplified - at end of input)
                 const lines = txt.trim().split('\n');
@@ -611,5 +609,6 @@ class RuleParser {
     }
 }
 module.exports = RuleParser
+module.exports.ParserRules = ParserRules
 module.exports.ParsingError = require('ebnf').ParsingError
 module.exports.RuleParseError = require('./errors/RuleParseError').RuleParseError
