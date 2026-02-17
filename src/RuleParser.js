@@ -179,6 +179,7 @@ class RuleParser {
                 }
                 
                 const betweenTod = betweenTodOnly.children[0]
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
@@ -193,6 +194,7 @@ class RuleParser {
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node
                 const betweenTod = tp.children[0]
+                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                 let startTod = RuleParser.__parseValue(betweenTod.children[0])
                 let endTod = RuleParser.__parseValue(betweenTod.children[1])
                 
@@ -208,13 +210,14 @@ class RuleParser {
             case 'between_time_only': {
                 // between_time_only has children[0] = between_number_time node
                 const betweenNumberTime = tp.children[0]
+                // between_number_time has: children[0] = first time_inner, children[1] = separator, children[2] = second time_inner, children[3] = optional dow_range
                 const startValue = RuleParser.__parseValue(betweenNumberTime.children[0])
-                const endValue = RuleParser.__parseValue(betweenNumberTime.children[1])
+                const endValue = RuleParser.__parseValue(betweenNumberTime.children[2])
                 
-                // Check if there's a dow_range at betweenNumberTime.children[2]
+                // Check if there's a dow_range at betweenNumberTime.children[3]
                 // If DOW filters are provided, append them as additional parameters
-                if (betweenNumberTime.children.length > 2 && betweenNumberTime.children[2].type === 'dow_range') {
-                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[2])
+                if (betweenNumberTime.children.length > 3 && betweenNumberTime.children[3].type === 'dow_range') {
+                    const dow = RuleParser._parseDowRange(betweenNumberTime.children[3])
                     if (dow.start === dow.end) {
                         // Single day: ["TimePeriodBetween", start, end, "MONDAY"]
                         return ["TimePeriodBetween", startValue, endValue, dow.start]
@@ -242,6 +245,7 @@ class RuleParser {
             case 'number_atom':
             case 'number_time_atom':
             case 'tod_atom':
+            case 'dow_atom':
             case 'between_tod_inner':
             case 'between_number_inner':
             case 'between_number_time_inner':
@@ -450,7 +454,7 @@ class RuleParser {
                 switch(rhs.type){
                     case 'between_tod': {
                         // Direct between_tod (without wrapping between node)
-                        // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                        // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                         const startTod = RuleParser.__parseValue(rhs.children[0])
                         const endTod = RuleParser.__parseValue(rhs.children[1])
                         
@@ -465,7 +469,7 @@ class RuleParser {
                         // between wraps either between_number or between_tod
                         const betweenChild = rhs.children[0]
                         if (betweenChild.type === 'between_tod') {
-                            // between_tod has: children[0] = first tod, children[1] = second tod, children[2] = optional dow_range
+                            // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
                             const startTod = RuleParser.__parseValue(betweenChild.children[0])
                             const endTod = RuleParser.__parseValue(betweenChild.children[1])
                             
@@ -476,12 +480,13 @@ class RuleParser {
                             
                             return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', startTod], ['Value', endTod]]
                         } else {
-                            // between_number - no dow support
-                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(betweenChild.children[0])], ['Value', RuleParser.__parseValue(betweenChild.children[1])]]
+                            // between_number has: children[0] = first number_inner, children[1] = separator, children[2] = second number_inner
+                            return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(betweenChild.children[0])], ['Value', RuleParser.__parseValue(betweenChild.children[2])]]
                         }
                     }
                     case 'between_number':
-                        return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(rhs.children[0].children[0])], ['Value', RuleParser.__parseValue(rhs.children[0].children[1])]]
+                        // between_number has: children[0] = first number_inner, children[1] = separator, children[2] = second number_inner
+                        return ['Between', RuleParser._parseResult(expr.children[0]), ['Value', RuleParser.__parseValue(rhs.children[0].children[0])], ['Value', RuleParser.__parseValue(rhs.children[0].children[2])]]
                     case 'basic_rhs':
                         return [OperatorFn[rhs.children[0].text], RuleParser._parseResult(expr.children[0]), RuleParser._parseResult(rhs.children[1])]
                     case 'eq_approx': {
@@ -603,6 +608,7 @@ class RuleParser {
                 // Extract the invalid time from the error message
                 const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
                 const badTod = match ? match[1] : 'invalid';
+                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 // Calculate position (simplified - at end of input)
                 const lines = txt.trim().split('\n');
