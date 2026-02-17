@@ -608,7 +608,6 @@ class RuleParser {
                 // Extract the invalid time from the error message
                 const match = e.message.match(/Invalid time of day[,:]?\s*([0-9:]+)/);
                 const badTod = match ? match[1] : 'invalid';
-                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 // Calculate position (simplified - at end of input)
                 const lines = txt.trim().split('\n');
