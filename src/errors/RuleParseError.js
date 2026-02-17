@@ -61,4 +61,4 @@ class RuleParseError extends Error {
   }
 }
 
-module.exports = { RuleParseError };
+module.exports = RuleParseError;

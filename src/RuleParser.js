@@ -1,6 +1,7 @@
 const {Parser} = require('ebnf/dist/Parser.js'),
       {ParsingError} = require('ebnf'),
-      assert = require('assert')
+      assert = require('assert'),
+      RuleParseError = require('./errors/RuleParseError')
 
 let ParserRules = require('./RuleParser.ebnf.js')
 let ParserCache;
@@ -626,7 +627,6 @@ class RuleParser {
             if (e.message && e.message.includes('Invalid day of week')) {
                 const match = e.message.match(/Invalid day of week[,:]?\s*(\w+)/);
                 const badDow = match ? match[1] : 'invalid';
-                const { RuleParseError } = require('./errors/RuleParseError');
                 
                 const lines = txt.trim().split('\n');
                 const position = {
@@ -653,5 +653,5 @@ class RuleParser {
 }
 module.exports = RuleParser
 module.exports.ParserRules = ParserRules
-module.exports.ParsingError = require('ebnf').ParsingError
-module.exports.RuleParseError = require('./errors/RuleParseError').RuleParseError
+module.exports.ParsingError = ParsingError
+module.exports.RuleParseError = RuleParseError
