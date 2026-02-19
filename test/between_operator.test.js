@@ -83,4 +83,20 @@ describe("BETWEEN Operator", function() {
 			["Eq", ["Active"], ["Value", true]]
 		])
 	})
+
+	it('should parse a complex BETWEEN expression', function() {
+		const expression = 'AnomalyRoomDurationStatistics("outside", "sum", 1 WEEKS AGO BETWEEN 1 HOUR AND 1 DAY) BETWEEN 0 AND 0.1'
+		const il = RuleParser.toIL(expression)
+		expect(il).to.be.eql([
+			"Between",
+			[
+				"AnomalyRoomDurationStatistics",
+				["Value", "outside"],
+				["Value", "sum"],
+				["TimePeriodBetweenAgo", 604800, 3600, 86400]
+			],
+			["Value", 0],
+			["Value", 0.1]
+		])
+	})
 })

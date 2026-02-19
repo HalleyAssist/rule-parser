@@ -158,38 +158,64 @@ class RuleParser {
                 }
                 return ["TimePeriodConst", tp.text]
             case 'time_period_ago_between': {
-                // time_period_ago_between has: number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ between_tod_only
+                // time_period_ago_between has: number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ (between_time_only | between_tod_only)
                 // We need to extract all number_time children and sum them up, then return TimePeriodBetweenAgo
                 let totalSeconds = 0
-                let betweenTodOnly = null
+                let betweenNode = null
+                let isBetweenTod = false
                 
-                // Find all number_time_atom children and the between_tod_only child
+                // Find all number_time_atom children and the between node (either between_time_only or between_tod_only)
                 for (let i = 0; i < tp.children.length; i++) {
                     if (tp.children[i].type === 'number_time_atom') {
                         // New structure: number_time_atom -> number_time
                         totalSeconds += RuleParser.__parseValue(tp.children[i].children[0])
-                    } else if (tp.children[i].type === 'between_tod_only') {
-                        betweenTodOnly = tp.children[i]
+                    } else if (tp.children[i].type === 'between_time_only' || tp.children[i].type === 'between_time_only_atom') {
+                        betweenNode = tp.children[i].type === 'between_time_only_atom' ? tp.children[i].children[0] : tp.children[i]
+                        isBetweenTod = false
+                    } else if (tp.children[i].type === 'between_tod_only' || tp.children[i].type === 'between_tod_only_atom') {
+                        betweenNode = tp.children[i].type === 'between_tod_only_atom' ? tp.children[i].children[0] : tp.children[i]
+                        isBetweenTod = true
                     }
                 }
                 
                 // This should always be present based on the grammar, but check defensively
-                if (!betweenTodOnly) {
-                    throw new Error('time_period_ago_between requires between_tod_only child')
+                if (!betweenNode) {
+                    throw new Error('time_period_ago_between requires between_time_only or between_tod_only child')
                 }
                 
-                const betweenTod = betweenTodOnly.children[0]
-                // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
-                let startTod = RuleParser.__parseValue(betweenTod.children[0])
-                let endTod = RuleParser.__parseValue(betweenTod.children[1])
-                
-                // Check if there's a dow_range at betweenTod.children[2]
-                // Note: startTod and endTod should always be objects from number_tod parsing
-                if (betweenTod.children.length > 2) {
-                    RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
+                if (isBetweenTod) {
+                    const betweenTod = betweenNode.children[0]
+                    // between_tod has inline separator, so: children[0] = first tod_inner, children[1] = second tod_inner, children[2] = optional dow_range
+                    let startTod = RuleParser.__parseValue(betweenTod.children[0])
+                    let endTod = RuleParser.__parseValue(betweenTod.children[1])
+                    
+                    // Check if there's a dow_range at betweenTod.children[2]
+                    // Note: startTod and endTod should always be objects from number_tod parsing
+                    if (betweenTod.children.length > 2) {
+                        RuleParser._addDowToTods(startTod, endTod, betweenTod.children[2])
+                    }
+                    
+                    return ["TimePeriodBetweenAgo", totalSeconds, startTod, endTod]
+                } else {
+                    const betweenNumberTime = betweenNode.children[0]
+                    // between_number_time has: children[0] = first time_inner, children[1] = separator, children[2] = second time_inner, children[3] = optional dow_range
+                    const startValue = RuleParser.__parseValue(betweenNumberTime.children[0])
+                    const endValue = RuleParser.__parseValue(betweenNumberTime.children[2])
+                    
+                    // Check if there's a dow_range at betweenNumberTime.children[3]
+                    if (betweenNumberTime.children.length > 3 && betweenNumberTime.children[3].type === 'dow_range') {
+                        const dow = RuleParser._parseDowRange(betweenNumberTime.children[3])
+                        if (dow.start === dow.end) {
+                            // Single day: ["TimePeriodBetweenAgo", totalSeconds, start, end, "MONDAY"]
+                            return ["TimePeriodBetweenAgo", totalSeconds, startValue, endValue, dow.start]
+                        } else {
+                            // Range: ["TimePeriodBetweenAgo", totalSeconds, start, end, "MONDAY", "FRIDAY"]
+                            return ["TimePeriodBetweenAgo", totalSeconds, startValue, endValue, dow.start, dow.end]
+                        }
+                    }
+                    
+                    return ["TimePeriodBetweenAgo", totalSeconds, startValue, endValue]
                 }
-                
-                return ["TimePeriodBetweenAgo", totalSeconds, startTod, endTod]
             }
             case 'between_tod_only': {
                 // between_tod_only has children[0] = between_tod node

@@ -77,6 +77,8 @@ dow_range            ||= "ON" WS+ dow_range_inner (WS+ "TO" WS+ dow_range_inner)
 
 between_time_only    ||= "BETWEEN" WS+ between_number_time
 between_tod_only     ||= "BETWEEN" WS+ between_tod
+between_time_only_atom ::= between_time_only
+between_tod_only_atom  ::= between_tod_only
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
 OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
@@ -103,7 +105,7 @@ number_time          ::= number WS+ unit
 number_tod           ::= ([0-9]+) ":" ([0-9]+)
 
 time_period_ago      ||= number_time_atom (WS+ number_time_atom)* WS+ AGO
-time_period_ago_between ||= number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ between_tod_only
+time_period_ago_between ||= number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ (between_time_only_atom | between_tod_only_atom)
 time_period_const    ||= "today" | time_period_ago
 time_period          ::= time_period_ago_between | time_period_const | between_tod_only | between_time_only
 
