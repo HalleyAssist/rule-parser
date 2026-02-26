@@ -65,15 +65,18 @@ const normalizeDow = (text) => {
 const Epsilon = 0.01
 
 class RuleParser {
-    static toAst(txt){
+    static toAst(txt, parser = null){
         let ret
 
-        if(!ParserCache){
-            ParserCache = new Parser(ParserRules, {debug: false})
+        if(!parser) {
+            if(!ParserCache){
+                ParserCache = new Parser(ParserRules, {debug: false})
+            }
+            parser = ParserCache
         }
 
         try {
-            ret = ParserCache.getAST(txt.trim(), 'statement_main');
+            ret = parser.getAST(txt.trim(), 'statement_main');
         } catch (e) {
             // If ebnf throws ParsingError, convert it to RuleParseError with helpful error code
             if (e instanceof ParsingError) {
