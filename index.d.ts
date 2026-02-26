@@ -198,7 +198,7 @@ declare class RuleParser {
    * @returns The AST node representing the parsed rule
    * @throws {RuleParseError} If the rule string is invalid
    */
-  static toAst(txt: string): ASTNode;
+  static toAst(txt: string, parser: any = null): ASTNode;
 
   /**
    * Parse a rule string into an Intermediate Language (IL) representation
