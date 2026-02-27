@@ -24,7 +24,7 @@ number_time_atom     ::= number_time
 tod_atom             ::= number_tod
 dow_atom             ::= dow
 
-arithmetic_operand   ::= fcall | number_time_atom | number_atom
+arithmetic_operand   ::= fcall | parenthesis_expression | number_time_atom | number_atom
 arithmetic_result    ::= arithmetic_operand WS* arithmetic_operator WS* (arithmetic_result | arithmetic_operand)
 
 simple_result        ::= fcall | value

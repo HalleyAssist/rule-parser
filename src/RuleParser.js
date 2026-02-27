@@ -386,6 +386,8 @@ class RuleParser {
         switch(type){
             case 'fcall':
                 return RuleParser._parseFcall(child)
+            case 'parenthesis_expression':
+                return RuleParser._parseParenthesisExpression(child)
             case 'number_atom':
             case 'number_time_atom': {
                 // New layer: unwrap atom wrappers to get the actual leaf nodes
