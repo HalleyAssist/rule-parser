@@ -109,5 +109,10 @@ describe("Edge Cases and Special Scenarios", function() {
 			expect(RuleParser.toIL(`VarSave("LivingDuration", (AnomalyRoomDurationStatistics(["a"], "sum", BETWEEN 1 HOURS AND 6 HOURS) * 4) + 1)`))
 				.to.be.eql(["VarSave", ["Value", "LivingDuration"], ["MathAdd", ["MathMul", ["AnomalyRoomDurationStatistics", ["Value", ["a"]], ["Value", "sum"], ["TimePeriodBetween", 3600, 21600]], ["Value", 4]], ["Value", 1]]])
 		})
+		
+		it("should parse more complex math (2)", function() {
+			expect(RuleParser.toIL(`VarSave("LivingDuration", (AnomalyRoomDurationStatistics(["a"], "sum", BETWEEN 1 HOURS AND 6 HOURS) * 4) + ((B() * C()) + D()))`))
+				.to.be.eql(["VarSave", ["Value", "LivingDuration"], ["MathAdd", ["MathMul", ["AnomalyRoomDurationStatistics", ["Value", ["a"]], ["Value", "sum"], ["TimePeriodBetween", 3600, 21600]], ["Value", 4]], ["MathAdd", ["MathMul", ["B"], ["C"]], ["D"]]]])
+		})
 	})
 })
