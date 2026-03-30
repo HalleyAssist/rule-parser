@@ -27,6 +27,12 @@ const il5: ILExpression = RuleParser.toIL('Value() == TODAY');
 // Test toIL with arithmetic
 const il6: ILExpression = RuleParser.toIL('1 + 2 > 3');
 
+// Test getFunctions
+const functionNames: string[] = RuleParser.getFunctions(
+  RuleParser.toIL('A(B(), 1) > C() AND !(D() IN (E(), 2))')
+);
+console.log(functionNames.join(','));
+
 // Test error handling
 try {
   RuleParser.toIL('1 >');

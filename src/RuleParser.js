@@ -34,6 +34,32 @@ const LogicalOperators = {
     "OR": 'Or',
 }
 
+const ILReservedNames = new Set([
+    'Value',
+    'Array',
+    'ArrayIn',
+    'Between',
+    'Not',
+    'And',
+    'Or',
+    'Gt',
+    'Lt',
+    'Gte',
+    'Lte',
+    'Eq',
+    'Neq',
+    'MathAdd',
+    'MathSub',
+    'MathDiv',
+    'MathMul',
+    'MathMod',
+    'Default',
+    'TimePeriodConst',
+    'TimePeriodConstAgo',
+    'TimePeriodBetween',
+    'TimePeriodBetweenAgo'
+])
+
 // Map abbreviations to canonical uppercase full form
 const DOW_MAP = {
     'MON': 'MONDAY',
@@ -622,6 +648,32 @@ class RuleParser {
             default:
                 throw new Error(`unknown type of expression ${eInner.type}`)
         }
+    }
+    static _collectFunctions(il, names){
+        if(!Array.isArray(il) || il.length === 0){
+            return
+        }
+
+        const [head, ...tail] = il
+
+        if(typeof head === 'string'){
+            if(!ILReservedNames.has(head)){
+                names.add(head)
+            }
+            for(const child of tail){
+                RuleParser._collectFunctions(child, names)
+            }
+            return
+        }
+
+        for(const child of il){
+            RuleParser._collectFunctions(child, names)
+        }
+    }
+    static getFunctions(il){
+        const names = new Set()
+        RuleParser._collectFunctions(il, names)
+        return [...names]
     }
     static toIL(txt){
         try {

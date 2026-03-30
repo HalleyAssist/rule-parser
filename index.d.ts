@@ -128,11 +128,23 @@ export type TimePeriodExpression =
   | TimePeriodBetweenAgo;
 
 /**
+ * Array expression used for dynamic `IN (...)` arguments
+ */
+export type ArrayExpression = ['Array', ...ILExpression[]];
+
+/**
+ * Array membership expression
+ */
+export type ArrayInExpression = ['ArrayIn', ILExpression, ILExpression];
+
+/**
  * Forward declaration for ILExpression to handle recursive types
  */
 export type ILExpression = 
   | ValueExpression
   | TimePeriodExpression
+  | ArrayExpression
+  | ArrayInExpression
   | FunctionCall
   | ComparisonExpression
   | LogicalExpression
@@ -207,6 +219,13 @@ declare class RuleParser {
    * @throws {RuleParseError} If the rule string is invalid
    */
   static toIL(txt: string): ILExpression;
+
+  /**
+   * Collect unique function names referenced in an IL expression
+   * @param il - The IL expression to inspect
+   * @returns Unique function names in first-seen order
+   */
+  static getFunctions(il: ILExpression): string[];
 }
 
 export default RuleParser;
