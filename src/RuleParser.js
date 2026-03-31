@@ -291,14 +291,8 @@ class RuleParser {
     static __parseValue(child){
         const type = child.type
         switch(type){
-            case 'value': {
-                // Arrays have value nodes as children - unwrap to get value_atom
-                return RuleParser.__parseValue(child.children[0])
-            }
-            case 'value_atom': {
-                // New layer: unwrap value_atom to get the actual atomic type
-                return RuleParser.__parseValue(child.children[0])
-            }
+            case 'value_atom':
+            case 'value':
             case 'number_atom':
             case 'number_time_atom':
             case 'tod_atom':
@@ -306,12 +300,12 @@ class RuleParser {
             case 'between_tod_inner':
             case 'between_number_inner':
             case 'between_number_time_inner':
-            case 'dow_range_inner': {
-                // New layer: unwrap atom wrappers to get the actual leaf nodes
+            case 'dow_range_inner':
                 return RuleParser.__parseValue(child.children[0])
-            }
             case 'string': {
                 const str = child.text
+                assert.strictEqual(str[0], '"')
+                assert.strictEqual(str[str.length - 1], '"')
                 return str.slice(1, -1)
             }
             case 'number':
