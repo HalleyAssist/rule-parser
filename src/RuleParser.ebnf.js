@@ -79,6 +79,8 @@ between_time_only    ||= "BETWEEN" WS+ between_number_time
 between_tod_only     ||= "BETWEEN" WS+ between_tod
 between_time_only_atom ::= between_time_only
 between_tod_only_atom  ::= between_tod_only
+time_period_atom     ::= between_tod_only | between_time_only
+time_period_ago_atom ::= time_period_ago_between
 
 AND                  ||= (WS* "&&" WS*) | (WS+ "AND" WS+)
 OR                   ||= (WS* "||" WS*) | (WS+ "OR" WS+)
@@ -107,7 +109,7 @@ number_tod           ::= ([0-9]+) ":" ([0-9]+)
 time_period_ago      ||= number_time_atom (WS+ number_time_atom)* WS+ AGO
 time_period_ago_between ||= number_time_atom (WS+ number_time_atom)* WS+ AGO WS+ (between_time_only_atom | between_tod_only_atom)
 time_period_const    ||= "today" | time_period_ago
-time_period          ::= time_period_ago_between | time_period_const | between_tod_only | between_time_only
+time_period          ::= time_period_ago_atom | time_period_const | time_period_atom
 
 string               ::= '"' (([#x20-#x21] | [#x23-#x5B] | [#x5D-#xFFFF]) | #x5C (#x22 | #x5C | #x2F | #x62 | #x66 | #x6E | #x72 | #x74 | #x75 HEXDIG HEXDIG HEXDIG HEXDIG))* '"'
 HEXDIG               ::= [a-fA-F0-9]

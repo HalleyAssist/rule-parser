@@ -159,6 +159,9 @@ class RuleParser {
     }
     static _parseTimePeriod(tp){
         switch(tp.type){
+            case 'time_period_atom':
+            case 'time_period_ago_atom':
+                return RuleParser._parseTimePeriod(tp.children[0])
             case 'time_period_const':
                 // Check if this is a time_period_ago (has children)
                 if (tp.children && tp.children.length > 0 && tp.children[0].type === 'time_period_ago') {
@@ -378,7 +381,7 @@ class RuleParser {
             case 'value_atom': {
                 // New layer: unwrap value_atom to get the actual atomic type
                 const atomChild = child.children[0]
-                if (atomChild.type === 'time_period') {
+                if (atomChild.type === 'time_period' || atomChild.type === 'time_period_atom' || atomChild.type === 'time_period_ago_atom') {
                     const tp = atomChild.children[0]
                     return RuleParser._parseTimePeriod(tp)
                 }
@@ -389,6 +392,9 @@ class RuleParser {
                 const tp = child.children[0]
                 return RuleParser._parseTimePeriod(tp)
             }
+            case 'time_period_atom':
+            case 'time_period_ago_atom':
+                return RuleParser._parseTimePeriod(child)
             default:
                 return ['Value', RuleParser.__parseValue(child)]
         }
