@@ -37,12 +37,6 @@ class RuleParseError extends Error {
     if (this.hint) {
       msg += `  Hint: ${this.hint}\n`;
     }
-    if (this.found) {
-      msg += `  Found: ${this.found}\n`;
-    }
-    if (this.expected && this.expected.length) {
-      msg += `  Expected: ${this.expected.join(', ')}`;
-    }
     return msg;
   }
 
