@@ -1,12 +1,11 @@
 const {Parser} = require('ebnf/dist/Parser.js'),
       {ParsingError} = require('ebnf'),
       assert = require('assert'),
-      RuleParseError = require('./errors/RuleParseError')
+      RuleParseError = require('./errors/RuleParseError'),
+      ErrorAnalyzer = require('./errors/ErrorAnalyzer')
 
 let ParserRules = require('./RuleParser.ebnf.js')
 let ParserCache;
-
-const { ErrorAnalyzer } = require('./errors/ErrorAnalyzer');
 
 const ArithmeticOperators = {
     "+": 'MathAdd',
@@ -73,17 +72,17 @@ const DOW_MAP = {
 };
 
 // Valid full day names
-const VALID_DAYS = new Set(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']);
+const VALID_DAYS = new Set(Object.values(DOW_MAP));
 
 const normalizeDow = (text) => {
     const upper = text.toUpperCase();
-    // Check if it's an abbreviation first
-    if (upper in DOW_MAP) {
-        return DOW_MAP[upper];
-    }
-    // Otherwise, check if it's a valid full name
+    // Check if it's a valid full name
     if (VALID_DAYS.has(upper)) {
         return upper;
+    }
+    // Check if it's an abbreviation
+    if (upper in DOW_MAP) {
+        return DOW_MAP[upper];
     }
     throw new Error(`Invalid day of week: ${text}`);
 };
@@ -735,7 +734,7 @@ class RuleParser {
                     "Valid days are: MONDAY/MON, TUESDAY/TUE, WEDNESDAY/WED, THURSDAY/THU, FRIDAY/FRI, SATURDAY/SAT, SUNDAY/SUN.",
                     position,
                     badDow,
-                    ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"],
+                    Object.values(DOW_MAP),
                     txt.trim().substring(Math.max(0, txt.trim().length - 50))
                 );
             }

@@ -1029,4 +1029,4 @@ class ErrorAnalyzer {
   }
 }
 
-module.exports = { ErrorAnalyzer };
+module.exports = ErrorAnalyzer;
