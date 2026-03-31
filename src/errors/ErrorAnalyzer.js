@@ -44,10 +44,14 @@ class ErrorAnalyzer {
     
     // Get snippet (last 50 chars or the whole input if shorter)
     const snippetStart = Math.max(0, trimmedInput.length - 50);
-    const snippet = (snippetStart > 0 ? '...' : '') + trimmedInput.substring(snippetStart);
+    const snippetEnd = trimmedInput.length;
+    let snippet = this._buildSnippet(trimmedInput, snippetStart, snippetEnd);
     
     // Analyze the error pattern
     const errorInfo = this._detectErrorPattern(trimmedInput, position, snippet);
+    this._enrichBadFunctionCallError(trimmedInput, position, errorInfo, (value) => {
+      snippet = value;
+    }, snippetStart, snippetEnd);
     
     return new RuleParseError(
       errorInfo.code,
@@ -73,12 +77,13 @@ class ErrorAnalyzer {
     // Get snippet around error position
     const snippetStart = Math.max(0, position.offset - 20);
     const snippetEnd = Math.min(input.length, position.offset + 30);
-    const snippet = (snippetStart > 0 ? '...' : '') + 
-                    input.substring(snippetStart, snippetEnd) +
-                    (snippetEnd < input.length ? '...' : '');
+    let snippet = this._buildSnippet(input, snippetStart, snippetEnd);
     
     // Analyze what was expected to determine error type using failureTree
     const errorInfo = this._detectErrorFromFailureTree(input, position, expected, found, failureTree);
+    this._enrichBadFunctionCallError(input, position, errorInfo, (value) => {
+      snippet = value;
+    }, snippetStart, snippetEnd);
     
     return new RuleParseError(
       errorInfo.code,
@@ -590,6 +595,109 @@ class ErrorAnalyzer {
       found: found,
       expected: ["valid expression"]
     };
+  }
+
+  static _enrichBadFunctionCallError(input, position, errorInfo, setSnippet, snippetStart, snippetEnd) {
+    if (!errorInfo || errorInfo.code !== "BAD_FUNCTION_CALL") {
+      return;
+    }
+
+    const functionContext = this._findFunctionContext(input, position.offset);
+    errorInfo.hint = this._getBadFunctionCallHint(input, position, functionContext);
+
+    if (!functionContext) {
+      return;
+    }
+
+    errorInfo.message = `Invalid function call syntax for ${functionContext.name}.`;
+    setSnippet(this._buildBadFunctionCallSnippet(input, functionContext, snippetStart, snippetEnd));
+  }
+
+  static _buildSnippet(input, start, end) {
+    return (start > 0 ? '...' : '') +
+      input.substring(start, end) +
+      (end < input.length ? '...' : '');
+  }
+
+  static _getBadFunctionCallHint(input, position, functionContext) {
+    const genericHint = "Function calls must have matching parentheses, e.g. func() or func(arg1, arg2).";
+
+    if (!functionContext || !this._isArgumentRelatedFunctionCallError(input, position, functionContext)) {
+      return genericHint;
+    }
+
+    return "Function calls must have matching parentheses, e.g. func() or func(arg1, arg2). Please check function arguments for invalid syntax.";
+  }
+
+  static _isArgumentRelatedFunctionCallError(input, position, functionContext) {
+    const endOffset = Math.max(functionContext.openParenIndex + 1, Math.min(position.offset, input.length));
+    const argumentText = input.substring(functionContext.openParenIndex + 1, endOffset).trim();
+    return argumentText.length > 0;
+  }
+
+  static _buildBadFunctionCallSnippet(input, functionContext, snippetStart, snippetEnd) {
+    if (snippetStart <= functionContext.start) {
+      return this._buildSnippet(input, snippetStart, snippetEnd);
+    }
+
+    const functionPrefix = input.substring(functionContext.start, functionContext.openParenIndex + 1);
+    const suffix = input.substring(snippetStart, snippetEnd);
+    return functionPrefix + '...' + suffix + (snippetEnd < input.length ? '...' : '');
+  }
+
+  static _findFunctionContext(input, offset) {
+    const scanLimit = Math.max(0, Math.min(typeof offset === 'number' ? offset : input.length, input.length));
+    const stack = [];
+    let inString = false;
+
+    for (let i = 0; i < scanLimit; i++) {
+      const char = input[i];
+
+      if (char === '"') {
+        if (!inString) {
+          inString = true;
+        } else {
+          let backslashCount = 0;
+          let j = i - 1;
+          while (j >= 0 && input[j] === '\\') {
+            backslashCount++;
+            j--;
+          }
+          if (backslashCount % 2 === 0) {
+            inString = false;
+          }
+        }
+        continue;
+      }
+
+      if (inString) {
+        continue;
+      }
+
+      if (char === '(') {
+        const prefix = input.substring(0, i);
+        const match = /([a-zA-Z_][a-zA-Z0-9_]*)\s*$/.exec(prefix);
+        if (match) {
+          stack.push({
+            name: match[1],
+            start: i - match[1].length,
+            openParenIndex: i
+          });
+        } else {
+          stack.push(null);
+        }
+      } else if (char === ')' && stack.length > 0) {
+        stack.pop();
+      }
+    }
+
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i]) {
+        return stack[i];
+      }
+    }
+
+    return null;
   }
 
   /**

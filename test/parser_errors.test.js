@@ -286,6 +286,19 @@ describe("Parser Error Handling", function() {
 				expect(e.code).to.equal("BAD_FUNCTION_CALL")
 			}
 		})
+		
+		it("should detect invalid arguments causing an invalid function call", function() {
+			const invalidRule = 'TimeOfDay() BETWEEN 09:00 AND 18:30 && SensorActionDuration(HasCapableSensor("bed"), "presence:present", "presence:absent", 09:00 TO 18:30) > 1 HOUR'
+			try {
+				RuleParser.toIL(invalidRule)
+				expect.fail("Should have thrown an error")
+			} catch (e) {
+				console.log("Caught error:", e.toString())
+				expect(e.code).to.equal("BAD_FUNCTION_CALL")
+				expect(e.snippet).to.include("SensorActionDuration(")
+				expect(e.hint).to.include("check function arguments")
+			}
+		})
 	})
 
 	describe("BAD_ARRAY_SYNTAX", function() {
